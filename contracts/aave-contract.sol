@@ -15,6 +15,7 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         owner = payable(msg.sender);
     }
 
+    // Take the loan
     function fn_RequestFlashLoan(address _token, uint256 _amount) public {
         address receiverAddress = address(this);
         address asset = _token;
@@ -22,7 +23,6 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         bytes memory params = "";
         uint16 referralCode = 0;
 
-        // Take the loan
         POOL.flashLoanSimple(
             receiverAddress,
             asset,
@@ -32,12 +32,14 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         );
     }
 
+    // Arbitrage action
     function arbitrargeUSDC(address _tokenAddress, uint256 _amount) private  returns(bool) {
         uint256 arbitraged_amount = (_amount / 10);       
         IERC20 token = IERC20(_tokenAddress);
         return token.transfer(owner, arbitraged_amount);
     }
 
+    //  
     function executeOperation(
         address asset, 
         uint256 amount, 
@@ -53,5 +55,9 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         uint256 repayAmount = amount + premium;
         IERC20(asset).approve(address(POOL), totalAmount);
 
+        return status;
     }
+
+    // Recieve the Ether
+    receive() external payable {}
 }
