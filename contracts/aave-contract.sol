@@ -32,6 +32,12 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         );
     }
 
+    function arbitrargeUSDC(address _tokenAddress, uint256 _amount) private  returns(bool) {
+        uint256 arbitraged_amount = (_amount / 10);       
+        IERC20 token = IERC20(_tokenAddress);
+        return token.transfer(owner, arbitraged_amount);
+    }
+
     function executeOperation(
         address asset, 
         uint256 amount, 
@@ -40,6 +46,8 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         bytes calldata params
         ) external override returns (bool) {
         
+        // Perform all logic before repaying the loan
+        bool status = arbitrargeUSDC(asset, amount);
 
         // Repay the loan
         uint256 repayAmount = amount + premium;
