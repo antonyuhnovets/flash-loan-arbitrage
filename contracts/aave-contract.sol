@@ -32,4 +32,18 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         );
     }
 
+    function executeOperation(
+        address asset, 
+        uint256 amount, 
+        uint256 premium, 
+        address initiator, 
+        bytes calldata params
+        ) external override returns (bool) {
+        
+
+        // Repay the loan
+        uint256 repayAmount = amount + premium;
+        IERC20(asset).approve(address(POOL), totalAmount);
+
+    }
 }
