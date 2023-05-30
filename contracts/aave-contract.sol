@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.10;
 
 import "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import "@aave/core-v3/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol";
@@ -33,7 +33,7 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
     }
 
     // Arbitrage action
-    function arbitrargeUSDC(address _tokenAddress, uint256 _amount) private  returns(bool) {
+    function _arbitrargeUSDC(address _tokenAddress, uint256 _amount) private pure returns(bool) {
         uint256 arbitraged_amount = (_amount / 10);       
         IERC20 token = IERC20(_tokenAddress);
         return token.transfer(owner, arbitraged_amount);
@@ -49,11 +49,11 @@ contract ArbitrargeFlashLoan is FlashLoanSimpleReceiverBase {
         ) external override returns (bool) {
         
         // Perform all logic before repaying the loan
-        bool status = arbitrargeUSDC(asset, amount);
+        bool status = _arbitrargeUSDC(asset, amount);
 
         // Repay the loan
         uint256 repayAmount = amount + premium;
-        IERC20(asset).approve(address(POOL), totalAmount);
+        IERC20(asset).approve(address(POOL), repayAmount);
 
         return status;
     }
