@@ -4,27 +4,28 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"log"
 	"math/big"
-	"os"
 
+	"github.com/antonyuhnovets/flash-loan-arbitrage/api"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	"github.com/antonyuhnovets/flash-loan-arbitrage/api"
 )
 
-func DeployAAVE() {
+func DeployAAVE(url, key, provider string) {
 	// connect to blockchain network
-	client, err := ethclient.Dial(os.Getenv("RPC_URL"))
+	client, err := ethclient.Dial(url)
 	if err != nil {
+		log.Println("22 ", err)
 		panic(err)
 	}
 
 	// private key of the deployer
-	privateKey, err := crypto.HexToECDSA(os.Getenv("PRIVATE_KEY"))
+	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
+		log.Println("29 ", err)
 		panic(err)
 	}
 
@@ -32,6 +33,7 @@ func DeployAAVE() {
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
+		log.Println("37 ")
 		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
 	}
 
@@ -41,53 +43,52 @@ func DeployAAVE() {
 	// chain id of the network
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {
+		log.Println("47 ", err)
 		panic(err)
 	}
 
 	// Get Transaction Ops to make a valid Ethereum transaction
 	auth, err := GetNextTransaction(client, fromAddress, privateKey, chainID)
 	if err != nil {
+		log.Println("54 ", err)
 		panic(err)
 	}
 
-	// deploy the contract
-	address, tx, simpleStorageApi, err := api.DeployApi(auth, client)
+	loanKey, err := crypto.HexToECDSA(provider)
 	if err != nil {
+		panic(err)
+	}
+
+	loanPubKey := loanKey.Public()
+	loanKeyECDSA, ok := loanPubKey.(*ecdsa.PublicKey)
+	if !ok {
+		panic("invalid key")
+	}
+
+	loanProvider := crypto.PubkeyToAddress(*loanKeyECDSA)
+
+	log.Println(loanProvider)
+
+	// deploy the contract
+	address, tx, FlashLoanApi, err := api.DeployApi(auth, client, loanProvider)
+	if err != nil {
+		log.Println("60 ", err)
 		panic(err)
 	}
 
 	fmt.Printf("Api contract deployed to %s\n", address.Hex())
 	fmt.Printf("Tx: %s\n", tx.Hash().Hex())
 
-	// Get Favorite Number
-	// Call SimpleStorage contract Retrieve function to get current favorite number
-	favoriteNumber, err := simpleStorageApi.Retrieve(&bind.CallOpts{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Favorite Number: %d\n", favoriteNumber)
+	FlashLoanApi.GetBalance(nil, address)
 
 	// Set Favorite Number
 	// Get Transaction Ops to make a valid Ethereum transaction
 	auth, err = GetNextTransaction(client, fromAddress, privateKey, chainID)
 	if err != nil {
+		log.Println("74 ", err)
 		panic(err)
 	}
 
-	// Call SimpleStorate Store function to store favorite number
-	reply, err := simpleStorageApi.Store(auth, big.NewInt(20))
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Reply: %s\n", reply.Hash().Hex())
-
-	// Get Favorite Number
-	// P.S. Retrieve is a Gas Free function hence no need to get Transaction Ops
-	newfavoriteNumber, err := simpleStorageApi.Retrieve(&bind.CallOpts{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Favorite Number: %d\n", newfavoriteNumber)
 }
 
 // GetNextTransaction returns the next transaction in the pending transaction queue
