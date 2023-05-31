@@ -2,6 +2,11 @@
   "dependencies": {
     "@aave/core-v3": "^1.17.2",
     "aave": "^0.0.1-security",
+    "dotenv": "^16.1.1",
     "solc": "0.8.10"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.14.1"
   }
 }
