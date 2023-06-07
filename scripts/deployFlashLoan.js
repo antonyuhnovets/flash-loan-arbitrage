@@ -4,9 +4,9 @@ async function main() {
   console.log("deploying...");
   const FlashLoan = await hre.ethers.getContractFactory("FlashLoan");
   const flashLoan = await FlashLoan.deploy(
-    "0xC911B590248d127aD18546B186cC6B324e99F02c"
+    "0xeb7A892BB04A8f836bDEeBbf60897A7Af1Bf5d7F"
   );
-
+  
   await flashLoan.deployed();
 
   console.log("Flash loan contract deployed: ", flashLoan.address);

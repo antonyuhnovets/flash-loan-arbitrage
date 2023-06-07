@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@aave/core-v3": "^1.17.2",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.3",
     "aave": "^0.0.1-security",
     "dotenv": "^16.1.1",
     "solc": "0.8.10"
