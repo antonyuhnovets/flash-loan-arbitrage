@@ -4,7 +4,11 @@ async function main() {
   console.log("deploying...");
   const FlashLoan = await hre.ethers.getContractFactory("FlashLoan");
   const flashLoan = await FlashLoan.deploy(
-    "0xeb7A892BB04A8f836bDEeBbf60897A7Af1Bf5d7F"
+    // ARB Goerli
+    // "0x4EEE0BB72C2717310318f27628B3c8a708E4951C",
+    // "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+    "0xC911B590248d127aD18546B186cC6B324e99F02c",
+    "0xE592427A0AEce92De3Edee1F18E0157C05861564"
   );
   
   await flashLoan.deployed();

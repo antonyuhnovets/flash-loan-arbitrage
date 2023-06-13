@@ -1,11 +1,17 @@
 package main
 
 import (
-	"os"
+	"log"
 
-	"github.com/antonyuhnovets/flash-loan-arbitrage/scripts"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/app"
 )
 
 func main() {
-	scripts.DeployAAVE(os.Getenv("RPC_URL"), os.Getenv("PRIVATE_KEY"), os.Getenv("ADDRESS_PROVIDER"))
+	conf, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.App(conf)
 }

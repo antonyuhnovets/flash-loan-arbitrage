@@ -1,4 +1,4 @@
-package scripts
+package ethereum
 
 import (
 	"context"
@@ -8,13 +8,14 @@ import (
 	"math/big"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/api"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func DeployAAVE(url, key, provider string) {
+func ConnectBlockchain(url, key, provider string) {
 	// connect to blockchain network
 	client, err := ethclient.Dial(url)
 	if err != nil {
