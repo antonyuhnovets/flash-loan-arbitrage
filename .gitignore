@@ -1,2 +1,9 @@
-.vscode/
+.vscode
+build
 node_modules
+api
+artifacts
+cache
+tmp
+.env
+package-lock.json

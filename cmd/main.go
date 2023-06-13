@@ -1,0 +1,17 @@
+package main
+
+import (
+	"log"
+
+	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/app"
+)
+
+func main() {
+	conf, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.App(conf)
+}
