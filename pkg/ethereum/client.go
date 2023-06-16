@@ -15,13 +15,80 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func ConnectBlockchain(url, key, provider string) {
-	// connect to blockchain network
+type Client struct {
+	Client *ethclient.Client
+	Wallet *Account
+}
+
+func NewClient(url, key string) (*Client, error) {
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Println("22 ", err)
-		panic(err)
+		return nil, err
 	}
+	cl := &Client{Client: client}
+
+	err = cl.setWallet(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return cl, nil
+}
+
+func (c *Client) setWallet(key string) error {
+	acc, err := GetAccount(key)
+	if err != nil {
+		return err
+	}
+	if err := acc.setPubKey(); err != nil {
+		return err
+	}
+
+	acc.setAddr()
+}
+
+type Account struct {
+	Address    common.Address
+	PubKey     *ecdsa.PublicKey
+	privateKey *ecdsa.PrivateKey
+}
+
+func GetAccount(key string) (*Account, error) {
+	privateKey, err := crypto.HexToECDSA(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Account{privateKey: privateKey}, nil
+}
+
+func (acc *Account) setPubKey() error {
+	pubKey, err := GetPublicKey(acc.privateKey)
+	if err != nil {
+		return err
+	}
+	acc.PubKey = pubKey
+
+	return nil
+}
+
+func (acc *Account) setAddr() {
+	acc.Address = crypto.PubkeyToAddress(*acc.PubKey)
+}
+
+func GetPublicKey(pk *ecdsa.PrivateKey) (*ecdsa.PublicKey, error) {
+	pubKey := pk.Public()
+	publicKeyECDSA, ok := pubKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("wrong key type")
+	}
+
+	return publicKeyECDSA, nil
+
+}
+
+func ConnectBlockchain(url, key, provider string) {
+	// connect to blockchain network
 
 	// private key of the deployer
 	privateKey, err := crypto.HexToECDSA(key)

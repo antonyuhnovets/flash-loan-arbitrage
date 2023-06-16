@@ -12,6 +12,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf(
+		"network: %s, \naccount: %s \ncontract: %s - %s\n",
+		conf.NetworkChain.Name,
+		conf.Account.Address,
+		conf.Contract.Name,
+		conf.Contract.Address,
+	)
 
 	app.App(conf)
 }

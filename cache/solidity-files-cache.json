@@ -981,51 +981,10 @@
         "IUniswapV2Router02"
       ]
     },
-    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/FlashLoan.sol": {
-      "lastModificationDate": 1686662413183,
-      "contentHash": "2d9c3ee359bc946325fde0e259da4458",
-      "sourceName": "contracts/FlashLoan.sol",
-      "solcConfig": {
-        "version": "0.8.17",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@aave/core-v3/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol",
-        "@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol",
-        "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol",
-        "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol",
-        "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol"
-      ],
-      "versionPragmas": [
-        ">=0.7.0 <=0.8.17"
-      ],
-      "artifacts": [
-        "FlashLoan"
-      ]
-    },
-    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/UniswapV3Swap.sol": {
-      "lastModificationDate": 1686662477863,
-      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
-      "sourceName": "contracts/UniswapV3Swap.sol",
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/ISwapRouter.sol": {
+      "lastModificationDate": 1686676880263,
+      "contentHash": "f9e78e66663b3f858db9d905232bf2dc",
+      "sourceName": "contracts/interfaces/ISwapRouter.sol",
       "solcConfig": {
         "version": "0.8.17",
         "settings": {
@@ -1050,8 +1009,1114 @@
         }
       },
       "imports": [],
-      "versionPragmas": [],
-      "artifacts": []
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "ISwapRouter"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/IERC20.sol": {
+      "lastModificationDate": 1686676860640,
+      "contentHash": "9dbfe61c2e02baa3a481a46482c2f5f3",
+      "sourceName": "contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/LowGasSafeMath.sol": {
+      "lastModificationDate": 1686717969860,
+      "contentHash": "88c03c3e0e24e100ee5113fab23bd66a",
+      "sourceName": "contracts/libraries/LowGasSafeMath.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <= 0.8.17"
+      ],
+      "artifacts": [
+        "LowGasSafeMath"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@aave/core-v3/contracts/flashloan/base/FlashLoanReceiverBase.sol": {
+      "lastModificationDate": 1686722155906,
+      "contentHash": "596eca7edfeae2c7a9bd260544f11770",
+      "sourceName": "@aave/core-v3/contracts/flashloan/base/FlashLoanReceiverBase.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IFlashLoanReceiver.sol",
+        "../../interfaces/IPoolAddressesProvider.sol",
+        "../../interfaces/IPool.sol"
+      ],
+      "versionPragmas": [
+        "<=0.8.17"
+      ],
+      "artifacts": [
+        "FlashLoanReceiverBase"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@aave/core-v3/contracts/flashloan/interfaces/IFlashLoanReceiver.sol": {
+      "lastModificationDate": 1684947379188,
+      "contentHash": "b5a370abf3464cd07a78d6a9ded0a975",
+      "sourceName": "@aave/core-v3/contracts/flashloan/interfaces/IFlashLoanReceiver.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../interfaces/IPoolAddressesProvider.sol",
+        "../../interfaces/IPool.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IFlashLoanReceiver"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/IPoolAddressesProvider.sol": {
+      "lastModificationDate": 1686721784470,
+      "contentHash": "8656f0faaa32ca04b81fbfcfd368f864",
+      "sourceName": "contracts/interfaces/IPoolAddressesProvider.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "<=0.8.17"
+      ],
+      "artifacts": [
+        "IPoolAddressesProvider"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/IUniswapV3FlashCallback.sol": {
+      "lastModificationDate": 1686731322760,
+      "contentHash": "e55e55045a003d378efb114908641458",
+      "sourceName": "contracts/interfaces/IUniswapV3FlashCallback.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "IUniswapV3FlashCallback"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/PoolAddress.sol": {
+      "lastModificationDate": 1686717667000,
+      "contentHash": "26d097a350e9e72d1aec0b0a32641f70",
+      "sourceName": "contracts/libraries/PoolAddress.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "PoolAddress"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/TransferHelper.sol": {
+      "lastModificationDate": 1686717672453,
+      "contentHash": "e60276bd5d79f8d4f3096a45ea256f8a",
+      "sourceName": "contracts/libraries/TransferHelper.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "TransferHelper"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/FlashBot.sol": {
+      "lastModificationDate": 1686908083284,
+      "contentHash": "1232650c54f4bd0825504e6c674e789f",
+      "sourceName": "contracts/FlashBot.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/EnumerableSet.sol",
+        "hardhat/console.sol",
+        "./interfaces/IUniswapV2Pair.sol",
+        "./interfaces/IWETH.sol",
+        "./libraries/Decimal.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "FlashBot"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/utils/EnumerableSet.sol": {
+      "lastModificationDate": 1686131421114,
+      "contentHash": "67da1a55369b7665b43457144add6761",
+      "sourceName": "@openzeppelin/contracts/utils/EnumerableSet.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "EnumerableSet"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1686131421164,
+      "contentHash": "4f17c0de1f7da8f37ab37794d3ca89d4",
+      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
+      "lastModificationDate": 1686131421170,
+      "contentHash": "f820d4ad7b31d38729f20fe1bda2d48f",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC20.sol",
+        "../../math/SafeMath.sol",
+        "../../utils/Address.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "SafeERC20"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1686131421104,
+      "contentHash": "2adbd82f6d055a4751566d4671512b03",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Context"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1686131421170,
+      "contentHash": "871a094d6b6b4c3714946e86329f2fa2",
+      "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1686131421097,
+      "contentHash": "fc7c67d7b17cde979a685143a26b2bc8",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1685545381900,
+      "contentHash": "4ff3cd2f6272c9a6516e9ee4f2b967d3",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">= 0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/Decimal.sol": {
+      "lastModificationDate": 1686731860680,
+      "contentHash": "3692b44bd785f9e6533d0a7de73c816d",
+      "sourceName": "contracts/libraries/Decimal.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./SafeMathCopy.sol"
+      ],
+      "versionPragmas": [
+        ">=0.7.0 <= 0.8.17"
+      ],
+      "artifacts": [
+        "Decimal"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/SafeMathCopy.sol": {
+      "lastModificationDate": 1686731858463,
+      "contentHash": "01fed17765e9f09eb6fcaf2094ec625f",
+      "sourceName": "contracts/libraries/SafeMathCopy.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <= 0.8.17"
+      ],
+      "artifacts": [
+        "SafeMathCopy"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/IWETH.sol": {
+      "lastModificationDate": 1686732709370,
+      "contentHash": "db21189bf1b334a1d85b080937510b4d",
+      "sourceName": "contracts/interfaces/IWETH.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "IWETH"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/IUniswapV2Pair.sol": {
+      "lastModificationDate": 1686731931703,
+      "contentHash": "5e18b316a2a3e3bd06a29bd4e6960e05",
+      "sourceName": "contracts/interfaces/IUniswapV2Pair.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "IUniswapV2Pair"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/interfaces/UniswapV2Callee.sol": {
+      "lastModificationDate": 1686731421953,
+      "contentHash": "885b6724a2690622caf22b19d42b35a5",
+      "sourceName": "contracts/interfaces/UniswapV2Callee.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <=0.8.17"
+      ],
+      "artifacts": [
+        "IUniswapV2Callee"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/libraries/SafeMath.sol": {
+      "lastModificationDate": 1686731859663,
+      "contentHash": "1a7962338b7f7bb849ba9e3638863b4a",
+      "sourceName": "contracts/libraries/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.7.0 <= 0.8.17"
+      ],
+      "artifacts": [
+        "SafeMath"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/test/TestInternalFunc.sol": {
+      "lastModificationDate": 1686909439047,
+      "contentHash": "3ad2ac0f6f1636363f42c6326601c489",
+      "sourceName": "contracts/test/TestInternalFunc.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../contracts/FlashBot.sol"
+      ],
+      "versionPragmas": [
+        "<=0.8.17"
+      ],
+      "artifacts": [
+        "InternalFuncTest"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/access/AccessControl.sol": {
+      "lastModificationDate": 1686131421097,
+      "contentHash": "6b30e1ed8d604f14ebfc2e1707346c38",
+      "sourceName": "@openzeppelin/contracts/access/AccessControl.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/EnumerableSet.sol",
+        "../utils/Address.sol",
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "AccessControl"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/utils/Pausable.sol": {
+      "lastModificationDate": 1686131421164,
+      "contentHash": "76ded95f5a12004766ba82df351fe7de",
+      "sourceName": "@openzeppelin/contracts/utils/Pausable.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "Pausable"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol": {
+      "lastModificationDate": 1686131421134,
+      "contentHash": "4798cf24900a0dce52586d42975fd816",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ERC20.sol",
+        "../../utils/Pausable.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "ERC20Pausable"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1686131421127,
+      "contentHash": "52659a61e7fb46afdc3d0f00c3a87da6",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/Context.sol",
+        "./IERC20.sol",
+        "../../math/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "ERC20"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol": {
+      "lastModificationDate": 1686131421127,
+      "contentHash": "1f7a6465c50e33bb5edd4c01be41f50b",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/Context.sol",
+        "./ERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "ERC20Burnable"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/node_modules/@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol": {
+      "lastModificationDate": 1686131421137,
+      "contentHash": "152354db17cf6801d992a8a518a06e5f",
+      "sourceName": "@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../access/AccessControl.sol",
+        "../utils/Context.sol",
+        "../token/ERC20/ERC20.sol",
+        "../token/ERC20/ERC20Burnable.sol",
+        "../token/ERC20/ERC20Pausable.sol"
+      ],
+      "versionPragmas": [
+        "^0.7.0"
+      ],
+      "artifacts": [
+        "ERC20PresetMinterPauser"
+      ]
+    },
+    "/home/anton/github.com/antonyuhnovets/flash-loan-arbitrage/contracts/test/TestERC20.sol": {
+      "lastModificationDate": 1686732582063,
+      "contentHash": "dc0869982fa94f7f75bf60fa8b59410b",
+      "sourceName": "contracts/test/TestERC20.sol",
+      "solcConfig": {
+        "version": "0.7.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol"
+      ],
+      "versionPragmas": [
+        "<=0.8.17"
+      ],
+      "artifacts": [
+        "TestERC20"
+      ]
     }
   }
 }

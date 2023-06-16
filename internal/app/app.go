@@ -10,26 +10,49 @@ import (
 )
 
 func App(conf *config.Config) {
-	out, err := Deploy(conf)
-	if err != nil {
-		log.Fatal(err)
+
+	if !IsDeployed(conf.Contract.Address) {
+		address, err := Deploy(conf)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Deployed to: %s", address)
+		conf.Blockchain.Contract.Address = address
 	}
 
-	log.Println("Deployed")
-	log.Println(out)
+	go Cycle()
+}
+
+func IsDeployed(address string) bool {
+	if address == "" {
+		return false
+	}
+
+	return true
 }
 
 func Deploy(conf *config.Config) (string, error) {
-	arg := fmt.Sprintf("deploy-%s", conf.Blockchain.Network)
-	cmd := exec.Command("make", arg)
+	arg := fmt.Sprintf("network=%s", conf.NetworkChain.Name)
+	arg1 := fmt.Sprintf("contract=%s", conf.Contract.Address)
 
-	cmd.Stdout = os.Stdout
+	cmd := exec.Command("make", "deploy", arg, arg1)
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
+	out, err := cmd.Output()
 	if err != nil {
-		return "Failed with ", err
+		return "", err
 	}
 
-	return "Success ", nil
+	address := string(out)[len(string(out))-43:]
+	os.Setenv("CONTRACT_ADDRESS", address)
+
+	return address, nil
+}
+
+func Verify(conf *config.Config) {}
+
+func Cycle() {
+	for {
+
+	}
 }
