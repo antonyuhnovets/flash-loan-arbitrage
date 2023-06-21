@@ -1,26 +1,58 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/cli"
 )
 
 func App(conf *config.Config) {
 
-	if !IsDeployed(conf.Contract.Address) {
-		address, err := Deploy(conf)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Deployed to: %s", address)
-		conf.Blockchain.Contract.Address = address
-	}
+	// if !IsDeployed(conf.Contract.Address) {
+	// 	address, err := Deploy(conf)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	log.Printf("Deployed to: %s", address)
+	// 	conf.Blockchain.Contract.Address = address
+	// }
 
-	go Cycle()
+	ctx := context.TODO()
+	cmd1 := cli.NewMakeCMD(
+		"build",
+		&ctx,
+		fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
+	)
+	cmd2 := cli.NewMakeCMD(
+		"deploy",
+		&ctx,
+		fmt.Sprintf("network=%s", conf.NetworkChain.Name),
+	)
+	cmd3 := cli.NewMakeCMD(
+		"delete",
+		&ctx,
+		fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
+	)
+	cmds := make(map[string]*cli.Command)
+	cmds["build"] = cmd1
+	cmds["deploy"] = cmd2
+	cmds["delete"] = cmd3
+
+	cli := cli.NewCLI(cmds)
+	cli.EnvSet("CONTRACT_ADDRESS", conf.Contract.Address)
+	cli.EnvSet("CONTRACT_NAME", conf.Blockchain.Contract.Name)
+
+	go cli.Run()
+	scan := cli.GetScanner()
+	for {
+		scan.Scan()
+		input := scan.Text()
+		cli.Cmd <- string(input)
+	}
 }
 
 func IsDeployed(address string) bool {
@@ -49,10 +81,15 @@ func Deploy(conf *config.Config) (string, error) {
 	return address, nil
 }
 
-func Verify(conf *config.Config) {}
+func Build(conf *config.Config) error {
+	cmd := exec.Command("make", "build", conf.Blockchain.Contract.Name)
+	cmd.Stderr = os.Stderr
 
-func Cycle() {
-	for {
-
+	err := cmd.Run()
+	if err != nil {
+		return err
 	}
+	return nil
 }
+
+func Verify(conf *config.Config) {}

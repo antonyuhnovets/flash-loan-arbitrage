@@ -2,15 +2,16 @@
 pragma solidity >=0.7.0 <=0.8.17;
 pragma abicoder v2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/EnumerableSet.sol';
 import 'hardhat/console.sol';
 
-import './interfaces/IUniswapV2Pair.sol';
+import './interfaces/ERC20/IERC20.sol';
+import './interfaces/ERC20/SafeERC20.sol';
+import './interfaces/uniswap-v2/IUniswapV2Pair.sol';
+
+import './contracts/Ownable.sol';
 import './interfaces/IWETH.sol';
 import './libraries/Decimal.sol';
+import './libraries/EnumerableSet.sol';
 
 struct OrderedReserves {
     uint256 a1; // base asset
