@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/cli"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 )
 
 func App(conf *config.Config) {
@@ -21,38 +21,48 @@ func App(conf *config.Config) {
 	// 	conf.Blockchain.Contract.Address = address
 	// }
 
-	ctx := context.TODO()
-	cmd1 := cli.NewMakeCMD(
-		"build",
-		&ctx,
-		fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
-	)
-	cmd2 := cli.NewMakeCMD(
-		"deploy",
-		&ctx,
-		fmt.Sprintf("network=%s", conf.NetworkChain.Name),
-	)
-	cmd3 := cli.NewMakeCMD(
-		"delete",
-		&ctx,
-		fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
-	)
-	cmds := make(map[string]*cli.Command)
-	cmds["build"] = cmd1
-	cmds["deploy"] = cmd2
-	cmds["delete"] = cmd3
+	// ctx := context.TODO()
+	// cmd1 := cli.NewMakeCMD(
+	// 	"build",
+	// 	&ctx,
+	// 	fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
+	// )
+	// cmd2 := cli.NewMakeCMD(
+	// 	"deploy",
+	// 	&ctx,
+	// 	fmt.Sprintf("network=%s", conf.NetworkChain.Name),
+	// )
+	// cmd3 := cli.NewMakeCMD(
+	// 	"delete",
+	// 	&ctx,
+	// 	fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
+	// )
+	// cmds := make(map[string]*cli.Command)
+	// cmds["build"] = cmd1
+	// cmds["deploy"] = cmd2
+	// cmds["delete"] = cmd3
 
-	cli := cli.NewCLI(cmds)
-	cli.EnvSet("CONTRACT_ADDRESS", conf.Contract.Address)
-	cli.EnvSet("CONTRACT_NAME", conf.Blockchain.Contract.Name)
+	// cli := cli.NewCLI(cmds)
+	// cli.EnvSet("CONTRACT_ADDRESS", conf.Contract.Address)
+	// cli.EnvSet("CONTRACT_NAME", conf.Blockchain.Contract.Name)
 
-	go cli.Run()
-	scan := cli.GetScanner()
-	for {
-		scan.Scan()
-		input := scan.Text()
-		cli.Cmd <- string(input)
+	// go cli.Run()
+	// scan := cli.GetScanner()
+	// for {
+	// 	scan.Scan()
+	// 	input := scan.Text()
+	// 	cli.Cmd <- string(input)
+	// }
+	ctx := context.Background()
+	cl, err := ethereum.NewClient(
+		conf.Blockchain.NetworkChain.Url,
+		os.Getenv("ACCOUNT_PRIVATE_KEY"),
+	)
+	if err != nil {
+		fmt.Println(err)
 	}
+
+	cl.DialContract(ctx, conf.Blockchain.Contract.Address)
 }
 
 func IsDeployed(address string) bool {
