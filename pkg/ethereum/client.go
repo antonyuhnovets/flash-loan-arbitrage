@@ -81,9 +81,11 @@ func (c *Client) setupWallet(key string) error {
 	if err != nil {
 		return err
 	}
+
 	if err := wall.setPubKey(); err != nil {
 		return err
 	}
+
 	wall.setAddr()
 
 	return nil
@@ -94,7 +96,9 @@ func (c *Client) setChainID(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	c.ChainID = chainId
+
 	return nil
 }
 
@@ -102,14 +106,13 @@ func (c *Client) GetChainID() *big.Int {
 	return c.ChainID
 }
 
-func (c *Client) DialContract(ctx context.Context, address string) error {
-	contract, err := api.NewApi(common.HexToAddress(address), c.Client)
+func (c *Client) DialContract(address common.Address) (*api.Api, error) {
+	contract, err := api.NewApi(address, c.Client)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	amt, _ := contract.GetBaseTokens(&bind.CallOpts{})
-	fmt.Println(amt)
-	return nil
+
+	return contract, nil
 }
 
 // GetNextTransaction returns the next transaction in the pending transaction queue
