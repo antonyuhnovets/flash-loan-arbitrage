@@ -7,15 +7,16 @@ import (
 
 type Config struct {
 	Blockchain
-}
-
-type Blockchain struct {
-	NetworkChain
 	Account
 	Contract
+	Storage
 }
 
-type NetworkChain struct {
+type Storage struct {
+	Type string `env:"STORAGE_TYPE" env-default:"localfile"`
+	Path string `env:"STORAGE_PATH" env-default:"./storage_test/test.json"`
+}
+type Blockchain struct {
 	Name string `env:"NETWORK_CHAIN_NAME" env-default:"goerli"`
 	Url  string `env:"NETWORK_CHAIN_URL"`
 }

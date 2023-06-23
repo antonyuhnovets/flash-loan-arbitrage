@@ -14,7 +14,7 @@ func main() {
 	}
 	log.Printf(
 		"network: %s, \naccount: %s \ncontract: %s - %s\n",
-		conf.NetworkChain.Name,
+		conf.Blockchain.Name,
 		conf.Account.Address,
 		conf.Contract.Name,
 		conf.Contract.Address,

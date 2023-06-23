@@ -3,10 +3,18 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/provider"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/repo"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 )
 
@@ -55,14 +63,39 @@ func App(conf *config.Config) {
 	// }
 	ctx := context.Background()
 	cl, err := ethereum.NewClient(
-		conf.Blockchain.NetworkChain.Url,
+		conf.Blockchain.Url,
 		os.Getenv("ACCOUNT_PRIVATE_KEY"),
 	)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	cl.DialContract(ctx, conf.Blockchain.Contract.Address)
+	cAdress := common.HexToAddress(
+		conf.Contract.Address,
+	)
+
+	c, err := cl.DialContract(cAdress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	contract := contract.NewContract(
+		cAdress, c, make([]entities.Token, 0),
+	)
+	provider := provider.NewTradeProvider(
+		ctx, cl, entities.TradePair{},
+	)
+	// repository, err := repo.NewFile(
+	// 	"./storage_test/test.json",
+	// )
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	repo := repo.NewStorage("./storage_test/test.json")
+	tc := tradecase.New(repo, provider, contract)
+
+	err = tc.Trade(ctx)
+	log.Println(err)
 }
 
 func IsDeployed(address string) bool {
@@ -74,7 +107,7 @@ func IsDeployed(address string) bool {
 }
 
 func Deploy(conf *config.Config) (string, error) {
-	arg := fmt.Sprintf("network=%s", conf.NetworkChain.Name)
+	arg := fmt.Sprintf("network=%s", conf.Blockchain.Name)
 	arg1 := fmt.Sprintf("contract=%s", conf.Contract.Address)
 
 	cmd := exec.Command("make", "deploy", arg, arg1)
@@ -92,7 +125,7 @@ func Deploy(conf *config.Config) (string, error) {
 }
 
 func Build(conf *config.Config) error {
-	cmd := exec.Command("make", "build", conf.Blockchain.Contract.Name)
+	cmd := exec.Command("make", "build", conf.Contract.Name)
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()

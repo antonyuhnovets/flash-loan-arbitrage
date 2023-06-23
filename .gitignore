@@ -4,6 +4,7 @@ node_modules
 api
 artifacts
 cache
+storage_test
 tmp
 .env
 package-lock.json
