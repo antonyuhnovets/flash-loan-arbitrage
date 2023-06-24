@@ -74,7 +74,7 @@ func (fac *FlashArbContract) AddBaseToken(
 	interface{},
 	error,
 ) {
-	fac.add(token)
+	fac.Add(token)
 
 	return fac.api.AddBaseToken(
 		&b.TransactOpts{Context: ctx},
@@ -93,7 +93,7 @@ func (fac *FlashArbContract) BaseTokensContains(
 		cm.HexToAddress(token.Address),
 	)
 	if ok {
-		fac.add(token)
+		fac.Add(token)
 	}
 
 	return ok, err
@@ -105,7 +105,7 @@ func (fac *FlashArbContract) RemoveBaseToken(
 	interface{},
 	error,
 ) {
-	fac.remove(token)
+	fac.Remove(token)
 
 	return fac.api.RemoveBaseToken(
 		&b.TransactOpts{
@@ -147,7 +147,7 @@ func (fac *FlashArbContract) GetBaseTokens(
 	return outTokens, nil
 }
 
-func (fac *FlashArbContract) add(
+func (fac *FlashArbContract) Add(
 	token Token,
 ) {
 	t, ok := fac.tokens[token.Address]
@@ -158,7 +158,7 @@ func (fac *FlashArbContract) add(
 	}
 }
 
-func (fac *FlashArbContract) remove(
+func (fac *FlashArbContract) Remove(
 	token Token,
 ) {
 	if _, ok := fac.tokens[token.Address]; ok {

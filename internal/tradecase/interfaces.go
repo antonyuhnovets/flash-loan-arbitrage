@@ -64,4 +64,7 @@ type SmartContract interface {
 		[]Token,
 		error,
 	)
+	Add(Token)
+
+	Remove(Token)
 }

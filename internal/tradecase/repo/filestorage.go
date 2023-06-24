@@ -11,10 +11,10 @@ import (
 
 type FileStorage struct {
 	path string
-	f    *os.File
+	// f    *os.File
 }
 
-func NewStorage(path string) *FileStorage {
+func UseFile(path string) *FileStorage {
 	return &FileStorage{
 		path: path,
 	}
@@ -32,7 +32,7 @@ func NewFile(
 		return nil, err
 	}
 
-	return &FileStorage{path, f}, nil
+	return &FileStorage{path}, nil
 }
 
 func (fs *FileStorage) Store(
@@ -44,14 +44,7 @@ func (fs *FileStorage) Store(
 		return err
 	}
 	defer f.Close()
-	// b := make([]byte, 0)
-	// _, err = f.Read(b)
-	// if err != nil {
-	// 	return err
-	// }
-	// full := string(b) + string(item)
 	index, err := f.Write(item)
-	// index, err := f.WriteString(string(item))
 	if err != nil {
 		return err
 	}
@@ -117,7 +110,8 @@ func (fs *FileStorage) StorePool(
 		return err
 	}
 
-	err = fs.Store(ctx, b)
+	data := string(b) + "\n"
+	err = fs.Store(ctx, []byte(data))
 	if err != nil {
 		return err
 	}

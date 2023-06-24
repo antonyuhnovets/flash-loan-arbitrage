@@ -1,0 +1,256 @@
+basePath: /v1
+definitions:
+  entities.SwapProtocol:
+    properties:
+      factoryAddress:
+        type: string
+      protocolName:
+        type: string
+      swapRouter:
+        type: string
+    type: object
+  entities.Token:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      wei:
+        type: integer
+    type: object
+  entities.TokenPair:
+    properties:
+      token0:
+        $ref: '#/definitions/entities.Token'
+      token1:
+        $ref: '#/definitions/entities.Token'
+    type: object
+  entities.TradePair:
+    properties:
+      pool0:
+        $ref: '#/definitions/entities.TradePool'
+      pool1:
+        $ref: '#/definitions/entities.TradePool'
+    type: object
+  entities.TradePool:
+    properties:
+      address:
+        type: string
+      pair:
+        $ref: '#/definitions/entities.TokenPair'
+      tradeProvider:
+        $ref: '#/definitions/entities.SwapProtocol'
+    type: object
+  v1.ListPools:
+    properties:
+      pools:
+        items:
+          $ref: '#/definitions/entities.TradePool'
+        type: array
+    type: object
+  v1.requestPairs:
+    properties:
+      protocol:
+        $ref: '#/definitions/entities.SwapProtocol'
+      tokenPair:
+        $ref: '#/definitions/entities.TokenPair'
+    type: object
+  v1.response:
+    properties:
+      error:
+        example: message
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: interacting with smart contract, collecting tokens, perform trade
+  title: Flash Loan Arbitrage bot
+  version: "1.0"
+paths:
+  /tradecase/pairs:
+    get:
+      consumes:
+      - application/json
+      description: Get list of pairs
+      operationId: pairs
+      parameters:
+      - description: Get pairs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.requestPairs'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.TradePair'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: GetPairs
+      tags:
+      - getPairs
+    post:
+      consumes:
+      - application/json
+      description: Add list of pairs
+      operationId: pairs
+      parameters:
+      - description: Add pairs
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entities.TradePair'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.TradePair'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: AddPairs
+      tags:
+      - addPairs
+  /tradecase/pools:
+    get:
+      consumes:
+      - application/json
+      description: Get list of pools
+      operationId: pools
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.ListPools'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: GetPools
+      tags:
+      - getPools
+    post:
+      consumes:
+      - application/json
+      description: Add list of pools
+      operationId: pools
+      parameters:
+      - description: Add pools
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entities.TradePool'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.TradePool'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: AddPools
+      tags:
+      - addPools
+  /tradecase/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Request token list
+      operationId: tokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Token'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: Get Tokens
+      tags:
+      - getTokens
+    post:
+      consumes:
+      - application/json
+      description: Add list of tokens
+      operationId: tokens
+      parameters:
+      - description: Add tokens
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entities.Token'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Token'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: AddTokens
+      tags:
+      - addTokens
+swagger: "2.0"

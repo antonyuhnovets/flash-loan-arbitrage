@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+
 	"os"
 	"os/exec"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
@@ -85,18 +87,51 @@ func App(conf *config.Config) {
 	provider := provider.NewTradeProvider(
 		ctx, cl, entities.TradePair{},
 	)
-	// repository, err := repo.NewFile(
-	// 	"./storage_test/test.json",
-	// )
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	repo := repo.NewStorage("./storage_test/test.json")
-	tc := tradecase.New(repo, provider, contract)
+	repository := repo.UseFile("./storage_test/test.json")
+	tc := tradecase.New(repository, provider, contract)
 
-	err = tc.Trade(ctx)
-	log.Println(err)
+	// err = tc.Trade(ctx)
+	log.Println(tc)
 }
+
+func icpConn(ctx context.Context, tc tradecase.TradeCase) {
+	r := tc.GetRepo()
+	apiRepo := *&rpc.API{
+		Namespace:     "repo",
+		Version:       "1.0",
+		Service:       r,
+		Public:        false,
+		Authenticated: false,
+	}
+	api := make([]rpc.API, 0)
+	api = append(api, apiRepo)
+
+	ipcSrv, err := ethereum.NewEndpointIPC("test", api)
+	if err != nil {
+		log.Println(err)
+	}
+	go ipcSrv.Start()
+	defer ipcSrv.Server.Stop()
+
+	ipcCl, err := ipcSrv.AddClient(ctx)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(ipcCl.Client.SupportedModules())
+	cli := ipcSrv.DialInProc()
+	log.Println(ipcCl.Client == cli.Client)
+	log.Println(cli.Client.SupportedModules())
+	newCl, err := rpc.DialContext(ctx, "test")
+
+	i, err := repo.NewFile("./storage_test/test_rpc.json")
+
+	newCl.RegisterName("repository", ipcSrv.Server)
+	m, err := newCl.SupportedModules()
+	log.Println(newCl.Call(i, m["rpc"]))
+	log.Println(ipcSrv.Api)
+}
+
+func SetupTradeCase()
 
 func IsDeployed(address string) bool {
 	if address == "" {

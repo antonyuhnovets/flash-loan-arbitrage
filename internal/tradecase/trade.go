@@ -22,6 +22,18 @@ func New(r TradeRepo, p TradeProvider, c SmartContract,
 	}
 }
 
+func (tc *TradeCase) GetRepo() TradeRepo {
+	return tc.repo
+}
+
+func (tc *TradeCase) GetContracr() SmartContract {
+	return tc.contract
+}
+
+func (tc *TradeCase) GetProvider() TradeProvider {
+	return tc.provider
+}
+
 func (tc *TradeCase) Trade(ctx context.Context,
 ) error {
 	tokens, err := tc.contract.GetBaseTokens(ctx)
