@@ -21,24 +21,30 @@ module.exports = {
   },
   networks: {
     mumbai: {
-      url: process.env.INFURA_MUMBAI_ENDPOINT,
-      accounts: [process.env.PRIVATE_KEY],
+      url: process.env.MUMBAI_ENDPOINT,
+      accounts: [process.env.ACCOUNT_PRIVATE_KEY],
       gasLimit: 300000000,
     },
     goerli: {
-      url: process.env.INFURA_ETH_GOERLI_ENDPOINT,
-      accounts: [process.env.PRIVATE_KEY],
+      url: process.env.ETH_GOERLI_ENDPOINT,
+      accounts: [process.env.ACCOUNT_PRIVATE_KEY],
+      gasLimit: 300000000,
+    },
+    goerliArb: {
+      url: process.env.ARB_GOERLI_ENDPOINT,
+      accounts: [process.env.ACCOUNT_PRIVATE_KEY],
       gasLimit: 300000000,
     },
     sepolita: {
-      url: process.env.INFURA_ETH_SEPOLITA_ENDPOINT,
-      accounts: [process.env.PRIVATE_KEY],
+      url: process.env.ETH_SEPOLITA_ENDPOINT,
+      accounts: [process.env.ACCOUNT_PRIVATE_KEY],
       gasLimit: 300000000,
     },
   },
   etherscan: {
     apiKey: {
       arbitrumGoerli: process.env.ARB_GOERLI_KEY,
+      polygonMumbai: process.env.MUMBAI_KEY,
     }
   }
 };

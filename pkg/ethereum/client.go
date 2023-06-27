@@ -4,10 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"log"
 	"math/big"
 
-	"github.com/antonyuhnovets/flash-loan-arbitrage/api"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,94 +14,118 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func ConnectBlockchain(url, key, provider string) {
-	// connect to blockchain network
-	client, err := ethclient.Dial(url)
-	if err != nil {
-		log.Println("22 ", err)
-		panic(err)
-	}
+type Wallet struct {
+	Address    common.Address
+	PubKey     *ecdsa.PublicKey
+	privateKey *ecdsa.PrivateKey
+}
 
-	// private key of the deployer
+func SetWallet(key string) (*Wallet, error) {
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Println("29 ", err)
-		panic(err)
+		return nil, err
 	}
 
-	// extract public key of the deployer from private key
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	return &Wallet{privateKey: privateKey}, nil
+}
+
+func (wall *Wallet) setPubKey() error {
+	pubKey, err := PullPublicKey(wall.privateKey)
+	if err != nil {
+		return err
+	}
+	wall.PubKey = pubKey
+
+	return nil
+}
+
+func (wall *Wallet) setAddr() {
+	wall.Address = crypto.PubkeyToAddress(*wall.PubKey)
+}
+
+func PullPublicKey(pk *ecdsa.PrivateKey) (*ecdsa.PublicKey, error) {
+	pubKey := pk.Public()
+	publicKeyECDSA, ok := pubKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Println("37 ")
-		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return nil, fmt.Errorf("wrong key type")
 	}
 
-	// address of the deployer
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	return publicKeyECDSA, nil
 
-	// chain id of the network
-	chainID, err := client.NetworkID(context.Background())
+}
+
+type Client struct {
+	Client  *ethclient.Client
+	Wallet  *Wallet
+	ChainID *big.Int
+}
+
+func NewClient(url, key string) (*Client, error) {
+	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Println("47 ", err)
-		panic(err)
+		return nil, err
 	}
+	cl := &Client{Client: client}
 
-	// Get Transaction Ops to make a valid Ethereum transaction
-	auth, err := GetNextTransaction(client, fromAddress, privateKey, chainID)
+	err = cl.setupWallet(key)
+	cl.setChainID(context.Background())
 	if err != nil {
-		log.Println("54 ", err)
-		panic(err)
+		return nil, err
 	}
 
-	loanKey, err := crypto.HexToECDSA(provider)
+	return cl, nil
+}
+
+func (c *Client) setupWallet(key string) error {
+	wall, err := SetWallet(key)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	loanPubKey := loanKey.Public()
-	loanKeyECDSA, ok := loanPubKey.(*ecdsa.PublicKey)
-	if !ok {
-		panic("invalid key")
+	if err := wall.setPubKey(); err != nil {
+		return err
 	}
 
-	loanProvider := crypto.PubkeyToAddress(*loanKeyECDSA)
+	wall.setAddr()
 
-	log.Println(loanProvider)
+	return nil
+}
 
-	// deploy the contract
-	address, tx, FlashLoanApi, err := api.DeployApi(auth, client, loanProvider)
+func (c *Client) setChainID(ctx context.Context) error {
+	chainId, err := c.Client.ChainID(ctx)
 	if err != nil {
-		log.Println("60 ", err)
-		panic(err)
+		return err
 	}
 
-	fmt.Printf("Api contract deployed to %s\n", address.Hex())
-	fmt.Printf("Tx: %s\n", tx.Hash().Hex())
+	c.ChainID = chainId
 
-	FlashLoanApi.GetBalance(nil, address)
+	return nil
+}
 
-	// Set Favorite Number
-	// Get Transaction Ops to make a valid Ethereum transaction
-	auth, err = GetNextTransaction(client, fromAddress, privateKey, chainID)
+func (c *Client) GetChainID() *big.Int {
+	return c.ChainID
+}
+
+func (c *Client) DialContract(address common.Address) (*api.Api, error) {
+	contract, err := api.NewApi(address, c.Client)
 	if err != nil {
-		log.Println("74 ", err)
-		panic(err)
+		return nil, err
 	}
 
+	return contract, nil
 }
 
 // GetNextTransaction returns the next transaction in the pending transaction queue
 // NOTE: this is not an optimized way
-func GetNextTransaction(client *ethclient.Client, fromAddress common.Address, privateKey *ecdsa.PrivateKey, chainID *big.Int) (*bind.TransactOpts, error) {
+func (c *Client) GetNextTransaction() (*bind.TransactOpts, error) {
 	// nonce
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	nonce, err := c.Client.PendingNonceAt(context.Background(), c.Wallet.Address)
 	if err != nil {
 		return nil, err
 	}
 
 	// sign the transaction
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	auth, err := bind.NewKeyedTransactorWithChainID(c.Wallet.privateKey, c.ChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,3 +136,75 @@ func GetNextTransaction(client *ethclient.Client, fromAddress common.Address, pr
 
 	return auth, nil
 }
+
+// func ConnectBlockchain(url, key, provider string) {
+// 	// connect to blockchain network
+
+// 	// private key of the deployer
+// 	privateKey, err := crypto.HexToECDSA(key)
+// 	if err != nil {
+// 		log.Println("29 ", err)
+// 		panic(err)
+// 	}
+
+// 	// extract public key of the deployer from private key
+// 	publicKey := privateKey.Public()
+// 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+// 	if !ok {
+// 		log.Println("37 ")
+// 		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+// 	}
+
+// 	// address of the deployer
+// 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+// 	// chain id of the network
+// 	chainID, err := client.NetworkID(context.Background())
+// 	if err != nil {
+// 		log.Println("47 ", err)
+// 		panic(err)
+// 	}
+
+// 	// Get Transaction Ops to make a valid Ethereum transaction
+// 	auth, err := GetNextTransaction(client, fromAddress, privateKey, chainID)
+// 	if err != nil {
+// 		log.Println("54 ", err)
+// 		panic(err)
+// 	}
+
+// 	loanKey, err := crypto.HexToECDSA(provider)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	loanPubKey := loanKey.Public()
+// 	loanKeyECDSA, ok := loanPubKey.(*ecdsa.PublicKey)
+// 	if !ok {
+// 		panic("invalid key")
+// 	}
+
+// 	loanProvider := crypto.PubkeyToAddress(*loanKeyECDSA)
+
+// 	log.Println(loanProvider)
+
+// 	// deploy the contract
+// 	address, tx, FlashLoanApi, err := api.DeployApi(auth, client, loanProvider)
+// 	if err != nil {
+// 		log.Println("60 ", err)
+// 		panic(err)
+// 	}
+
+// 	fmt.Printf("Api contract deployed to %s\n", address.Hex())
+// 	fmt.Printf("Tx: %s\n", tx.Hash().Hex())
+
+// 	FlashLoanApi.GetBalance(nil, address)
+
+// 	// Set Favorite Number
+// 	// Get Transaction Ops to make a valid Ethereum transaction
+// 	auth, err = GetNextTransaction(client, fromAddress, privateKey, chainID)
+// 	if err != nil {
+// 		log.Println("74 ", err)
+// 		panic(err)
+// 	}
+
+// }
