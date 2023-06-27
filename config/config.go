@@ -6,10 +6,20 @@ import (
 )
 
 type Config struct {
+	Log
+	HttpServer
 	Blockchain
 	Account
 	Contract
 	Storage
+}
+
+type Log struct {
+	Level string `env:"LOG_LEVEL" env-default:"debug"`
+}
+type HttpServer struct {
+	Port string `env:"PORT" env-default:"8080"`
+	Host string `env:"HOST" env-default:"0.0.0.0"`
 }
 
 type Storage struct {

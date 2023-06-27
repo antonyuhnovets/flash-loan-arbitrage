@@ -4,66 +4,32 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"syscall"
 
 	"os"
 	"os/exec"
+	"os/signal"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	v1 "github.com/antonyuhnovets/flash-loan-arbitrage/internal/delivery/rest/v1"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/provider"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/repo"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/httpserver"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
-func App(conf *config.Config) {
+func Run(conf *config.Config) {
 
-	// if !IsDeployed(conf.Contract.Address) {
-	// 	address, err := Deploy(conf)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	log.Printf("Deployed to: %s", address)
-	// 	conf.Blockchain.Contract.Address = address
-	// }
-
-	// ctx := context.TODO()
-	// cmd1 := cli.NewMakeCMD(
-	// 	"build",
-	// 	&ctx,
-	// 	fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
-	// )
-	// cmd2 := cli.NewMakeCMD(
-	// 	"deploy",
-	// 	&ctx,
-	// 	fmt.Sprintf("network=%s", conf.NetworkChain.Name),
-	// )
-	// cmd3 := cli.NewMakeCMD(
-	// 	"delete",
-	// 	&ctx,
-	// 	fmt.Sprintf("contract=%s", conf.Blockchain.Contract.Name),
-	// )
-	// cmds := make(map[string]*cli.Command)
-	// cmds["build"] = cmd1
-	// cmds["deploy"] = cmd2
-	// cmds["delete"] = cmd3
-
-	// cli := cli.NewCLI(cmds)
-	// cli.EnvSet("CONTRACT_ADDRESS", conf.Contract.Address)
-	// cli.EnvSet("CONTRACT_NAME", conf.Blockchain.Contract.Name)
-
-	// go cli.Run()
-	// scan := cli.GetScanner()
-	// for {
-	// 	scan.Scan()
-	// 	input := scan.Text()
-	// 	cli.Cmd <- string(input)
-	// }
 	ctx := context.Background()
+
+	// ethereum client
 	cl, err := ethereum.NewClient(
 		conf.Blockchain.Url,
 		os.Getenv("ACCOUNT_PRIVATE_KEY"),
@@ -72,15 +38,16 @@ func App(conf *config.Config) {
 		fmt.Println(err)
 	}
 
+	// contract
 	cAdress := common.HexToAddress(
 		conf.Contract.Address,
 	)
-
 	c, err := cl.DialContract(cAdress)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// tradecase
 	contract := contract.NewContract(
 		cAdress, c, make([]entities.Token, 0),
 	)
@@ -90,48 +57,38 @@ func App(conf *config.Config) {
 	repository := repo.UseFile("./storage_test/test.json")
 	tc := tradecase.New(repository, provider, contract)
 
+	// logger
+	l := logger.New(conf.Log.Level)
+
+	// http server
+	handler := gin.New()
+	v1.NewRouter(handler, l, *tc)
+	httpServer := httpserver.New(
+		handler,
+		httpserver.Port(conf.HttpServer.Port),
+	)
+
+	// waiting signal
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	// run
+	select {
+	case s := <-interrupt:
+		l.Info("app - Run - signal: " + s.String())
+	case err = <-httpServer.Notify():
+		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+	}
+
+	// Shutdown
+	err = httpServer.Shutdown()
+	if err != nil {
+		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+	}
+
 	// err = tc.Trade(ctx)
-	log.Println(tc)
+	// log.Println(tc)
 }
-
-func icpConn(ctx context.Context, tc tradecase.TradeCase) {
-	r := tc.GetRepo()
-	apiRepo := *&rpc.API{
-		Namespace:     "repo",
-		Version:       "1.0",
-		Service:       r,
-		Public:        false,
-		Authenticated: false,
-	}
-	api := make([]rpc.API, 0)
-	api = append(api, apiRepo)
-
-	ipcSrv, err := ethereum.NewEndpointIPC("test", api)
-	if err != nil {
-		log.Println(err)
-	}
-	go ipcSrv.Start()
-	defer ipcSrv.Server.Stop()
-
-	ipcCl, err := ipcSrv.AddClient(ctx)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println(ipcCl.Client.SupportedModules())
-	cli := ipcSrv.DialInProc()
-	log.Println(ipcCl.Client == cli.Client)
-	log.Println(cli.Client.SupportedModules())
-	newCl, err := rpc.DialContext(ctx, "test")
-
-	i, err := repo.NewFile("./storage_test/test_rpc.json")
-
-	newCl.RegisterName("repository", ipcSrv.Server)
-	m, err := newCl.SupportedModules()
-	log.Println(newCl.Call(i, m["rpc"]))
-	log.Println(ipcSrv.Api)
-}
-
-func SetupTradeCase()
 
 func IsDeployed(address string) bool {
 	if address == "" {
@@ -160,13 +117,16 @@ func Deploy(conf *config.Config) (string, error) {
 }
 
 func Build(conf *config.Config) error {
-	cmd := exec.Command("make", "build", conf.Contract.Name)
+	arg := fmt.Sprintf("contract=%s", conf.Contract.Address)
+
+	cmd := exec.Command("make", "build", arg)
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

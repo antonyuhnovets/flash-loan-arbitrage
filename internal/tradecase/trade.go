@@ -26,7 +26,7 @@ func (tc *TradeCase) GetRepo() TradeRepo {
 	return tc.repo
 }
 
-func (tc *TradeCase) GetContracr() SmartContract {
+func (tc *TradeCase) GetContract() SmartContract {
 	return tc.contract
 }
 

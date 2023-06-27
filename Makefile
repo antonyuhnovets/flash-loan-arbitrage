@@ -11,3 +11,13 @@ build:
 delete:
 	rm -rf ./build
 	rm -rf ./internal/api/$(contract).go
+
+swag:
+	swag init -g internal/delivery/rest/v1/router.go
+
+run:
+	go run cmd/main.go
+
+restart:
+	make swag
+	make run

@@ -20,5 +20,5 @@ func main() {
 		conf.Contract.Address,
 	)
 
-	app.App(conf)
+	app.Run(conf)
 }
