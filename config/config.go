@@ -18,8 +18,8 @@ type Log struct {
 	Level string `env:"LOG_LEVEL" env-default:"debug"`
 }
 type HttpServer struct {
-	Port string `env:"PORT" env-default:"8080"`
-	Host string `env:"HOST" env-default:"0.0.0.0"`
+	Port string `env:"HTTP_PORT" env-default:"8080"`
+	Host string `env:"HTTP_HOST" env-default:"0.0.0.0"`
 }
 
 type Storage struct {
@@ -27,8 +27,8 @@ type Storage struct {
 	Path string `env:"STORAGE_PATH" env-default:"./storage_test/test.json"`
 }
 type Blockchain struct {
-	Name string `env:"NETWORK_CHAIN_NAME" env-default:"goerli"`
-	Url  string `env:"NETWORK_CHAIN_URL"`
+	Name string `env:"BLOCKCHAIN_NAME" env-default:"goerli"`
+	Url  string `env:"BLOCKCHAIN_RPC_URL"`
 }
 
 type Account struct {
