@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 
 	// Swagger docs.
 	_ "github.com/antonyuhnovets/flash-loan-arbitrage/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"

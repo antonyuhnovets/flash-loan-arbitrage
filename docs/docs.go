@@ -29,25 +29,15 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contract",
-                    "tokens"
+                    "Contract"
                 ],
-                "summary": "Get Tokens",
-                "operationId": "getTokens",
+                "summary": "List Tokens",
+                "operationId": "listTokens",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.Token"
-                            }
-                        }
-                    },
-                    "507": {
-                        "description": "Insufficient Storage",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/TokenList"
                         }
                     }
                 }
@@ -61,8 +51,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contract",
-                    "tokens"
+                    "Contract"
                 ],
                 "summary": "Add Tokens",
                 "operationId": "addTokens",
@@ -73,27 +62,51 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.Token"
-                            }
+                            "$ref": "#/definitions/TokenList"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.Token"
-                            }
+                            "$ref": "#/definitions/TokenList"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contract/tokens/base": {
+            "get": {
+                "description": "Request base token list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contract"
+                ],
+                "summary": "Get Tokens",
+                "operationId": "getTokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -109,8 +122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider",
-                    "pairs"
+                    "Provider"
                 ],
                 "summary": "Get Pairs",
                 "operationId": "getPairs",
@@ -129,22 +141,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.TradePair"
-                            }
+                            "$ref": "#/definitions/ListPairs"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -158,8 +167,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider",
-                    "pairs"
+                    "Provider"
                 ],
                 "summary": "Add Pairs",
                 "operationId": "addPairs",
@@ -170,27 +178,57 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.TradePair"
-                            }
+                            "$ref": "#/definitions/ListPairs"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.TradePair"
-                            }
+                            "$ref": "#/definitions/ListPairs"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/provider/pairs/list": {
+            "get": {
+                "description": "Get full list of pairs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Provider"
+                ],
+                "summary": "List Pairs",
+                "operationId": "listPairs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPairs"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -206,8 +244,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Storage",
-                    "pools"
+                    "Storage"
                 ],
                 "summary": "Get Pools",
                 "operationId": "getPools",
@@ -218,22 +255,16 @@ const docTemplate = `{
                             "$ref": "#/definitions/ListPools"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Error"
-                        }
-                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "507": {
+                        "description": "Insufficient Storage",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -247,8 +278,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Storage",
-                    "pools"
+                    "Storage"
                 ],
                 "summary": "Add Pools",
                 "operationId": "addPools",
@@ -259,39 +289,93 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.TradePool"
-                            }
+                            "$ref": "#/definitions/ListPools"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.TradePool"
-                            }
+                            "$ref": "#/definitions/ListPools"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "507": {
                         "description": "Insufficient Storage",
                         "schema": {
-                            "$ref": "#/definitions/Error"
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/pairs": {
+            "get": {
+                "description": "Load profitable pairs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Load Pairs",
+                "operationId": "loadPairs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPairs"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/tokens": {
+            "get": {
+                "description": "Load unknown tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Load Tokens",
+                "operationId": "loadTokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -299,12 +383,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "Error": {
+        "ErrorResponse": {
+            "description": "Error response object",
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string",
                     "example": "message"
+                }
+            }
+        },
+        "ListPairs": {
+            "description": "Request list of trading pairs",
+            "type": "object",
+            "properties": {
+                "pairs": {
+                    "description": "list of trade pools",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entities.TradePair"
+                    }
                 }
             }
         },
@@ -340,6 +438,19 @@ const docTemplate = `{
                             "$ref": "#/definitions/entities.TokenPair"
                         }
                     ]
+                }
+            }
+        },
+        "TokenList": {
+            "description": "Request list of tokens",
+            "type": "object",
+            "properties": {
+                "tokens": {
+                    "description": "list of tokens",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entities.Token"
+                    }
                 }
             }
         },

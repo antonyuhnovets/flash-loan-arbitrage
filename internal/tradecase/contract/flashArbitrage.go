@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"context"
 	c "context"
 	"log"
 	"math/big"
@@ -147,6 +148,24 @@ func (fac *FlashArbContract) GetBaseTokens(
 	return outTokens, nil
 }
 
+func (fac *FlashArbContract) GetProfit(
+	ctx context.Context, pair TradePair,
+) (
+	int,
+	error,
+) {
+	prof, err := fac.api.GetProfit(
+		&b.CallOpts{Context: ctx},
+		cm.HexToAddress(pair.Pool0.Address),
+		cm.HexToAddress(pair.Pool1.Address),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return convertProfit(prof.Profit, fac.tokens[prof.BaseToken.Hex()]), nil
+}
+
 func (fac *FlashArbContract) Add(
 	token Token,
 ) {
@@ -166,4 +185,37 @@ func (fac *FlashArbContract) Remove(
 
 		return
 	}
+}
+
+func (fac *FlashArbContract) Get(
+	addr string,
+) (Token,
+	bool,
+) {
+	token, ok := fac.tokens[addr]
+	return token, ok
+}
+
+func (fac *FlashArbContract) Tokens() map[string]Token {
+	return fac.tokens
+}
+
+func (fac *FlashArbContract) List() []Token {
+	vals := make([]Token, 0)
+	for _, v := range fac.tokens {
+		vals = append(vals, v)
+	}
+	return vals
+}
+
+func (fac *FlashArbContract) Clear() {
+	new := make(map[string]Token, 0)
+	fac.tokens = new
+
+	return
+}
+
+func convertProfit(num *big.Int, curr Token) int {
+	res := int(num.Int64())
+	return res
 }

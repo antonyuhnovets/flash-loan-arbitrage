@@ -3,6 +3,7 @@ package repo
 import (
 	c "context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -119,7 +120,7 @@ func (fs *FileStorage) StorePool(
 	return nil
 }
 
-func (fs *FileStorage) ListAllPools(
+func (fs *FileStorage) ListPools(
 	ctx c.Context,
 ) (
 	[]TradePool,
@@ -138,6 +139,30 @@ func (fs *FileStorage) ListAllPools(
 	}
 
 	return pools, nil
+}
+
+func (fs *FileStorage) GetTokenByAddress(
+	ctx c.Context, addr string,
+) (
+	Token,
+	error,
+) {
+	pools, err := fs.ListPools(ctx)
+	if err != nil {
+		return Token{}, err
+	}
+
+	for _, pool := range pools {
+		if pool.Pair.Token0.Address == addr {
+			return pool.Pair.Token0, nil
+		} else if pool.Pair.Token1.Address == addr {
+			return pool.Pair.Token1, nil
+		} else {
+			continue
+		}
+	}
+
+	return Token{}, fmt.Errorf("token with address %s not found", addr)
 }
 
 func (fs *FileStorage) Clear(ctx c.Context) error {

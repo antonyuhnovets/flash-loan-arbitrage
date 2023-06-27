@@ -91,11 +91,31 @@ func (tp *TradeProvider) GetPairs(
 	return pairs, ok
 }
 
-func (tp *TradeProvider) ListAllPairs(
+func (tp *TradeProvider) SetPairs(
+	ctx c.Context, pairs []TradePair,
+) error {
+	for _, pair := range pairs {
+		err := tp.AddPair(ctx, pair)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (tp *TradeProvider) ListPairs(
 	ctx c.Context,
 ) []TradePair {
 
 	return tp.PoolPairs
+}
+
+func (tp *TradeProvider) Clear() {
+	new := make([]TradePair, 0)
+	tp.PoolPairs = new
+
+	return
 }
 
 func checkPairProtocol(

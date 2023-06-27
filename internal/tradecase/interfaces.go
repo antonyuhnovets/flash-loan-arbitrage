@@ -18,12 +18,17 @@ type TradeRepo interface {
 		[]TradePool,
 		error,
 	)
-	ListAllPools(c.Context) (
+	ListPools(c.Context) (
 		[]TradePool,
 		error,
 	)
 	StorePool(c.Context, TradePool,
 	) error
+
+	GetTokenByAddress(c.Context, string) (
+		Token,
+		error,
+	)
 
 	Clear(c.Context) error
 }
@@ -43,8 +48,13 @@ type TradeProvider interface {
 		[]TradePair,
 		bool,
 	)
-	ListAllPairs(c.Context,
+
+	SetPairs(c.Context, []TradePair) error
+
+	ListPairs(c.Context,
 	) []TradePair
+
+	Clear()
 }
 
 type SmartContract interface {
@@ -64,7 +74,21 @@ type SmartContract interface {
 		[]Token,
 		error,
 	)
+
+	GetProfit(c.Context, TradePair) (
+		int,
+		error,
+	)
+
 	Add(Token)
 
 	Remove(Token)
+
+	Get(string) (Token, bool)
+
+	Tokens() map[string]Token
+
+	List() []Token
+
+	Clear()
 }

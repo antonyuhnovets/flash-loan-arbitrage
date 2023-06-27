@@ -2,60 +2,47 @@ package v1
 
 import (
 	"encoding/json"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
+	tc "github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	log "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
 type tradecaseRoutes struct {
-	t tradecase.TradeCase
-	l logger.Interface
+	t tc.TradeCase
+	l log.Interface
 }
-
-// @Description Request list of trading pools
-type ListPools struct {
-	Pools []entities.TradePool `json:"pools" bson:"pools"` // list of trade pools
-} //@name ListPools
-
-// @Description Request for searching trade pair
-type requestPairs struct {
-	Protocol  entities.SwapProtocol `json:"protocol" bson:"protocol"`   // trade protocol
-	TokenPair entities.TokenPair    `json:"tokenPair" bson:"tokenPair"` // pair of tokens
-} //@name RequestPairs
 
 // @Summary     Get Pools
 // @Description Get list of pools
 // @ID          getPools
-// @Tags  	    Storage, pools
+// @Tags  	    Storage
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} ListPools
-// @Failure     400 {object} response
-// @Failure     409 {object} response
-// @Failure     500 {object} response
+// @Success     200 {object} listPools
+// @Failure     409 {object} responseErr
+// @Failure     507 {object} responseErr
 // @Router      /storage/pools [get]
 func (tr *tradecaseRoutes) GetPools(c *gin.Context) {
-	res := &ListPools{}
+	res := &listPools{}
 
 	out, err := tr.t.GetRepo().Read(c)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - GetPools")
-		errorResponse(c, http.StatusBadRequest, err.Error())
-
+		errorInufficientStorage(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - GetPools"),
+		)
 		return
 	}
 
 	err = json.Unmarshal(out, res)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - AddPools")
-		errorResponse(c, http.StatusConflict, err.Error())
+		errorConflict(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - AddPools"),
+		)
+		return
 	}
-
-	c.JSON(http.StatusOK, res)
+	respondOk(c, res)
 
 	return
 }
@@ -63,41 +50,43 @@ func (tr *tradecaseRoutes) GetPools(c *gin.Context) {
 // @Summary     Add Pools
 // @Description Add list of pools
 // @ID          addPools
-// @Tags  	    Storage, pools
+// @Tags  	    Storage
 // @Accept      json
 // @Produce     json
-// @Param       request body []entities.TradePool true "Add pools"
-// @Success     200 {object} []entities.TradePool
-// @Failure     400 {object} response
-// @Failure     409 {object} response
-// @Failure     507 {object} response
+// @Param       request body listPools true "Add pools"
+// @Success     201 {object} listPools
+// @Failure     400 {object} responseErr
+// @Failure     409 {object} responseErr
+// @Failure     507 {object} responseErr
 // @Router      /storage/pools [post]
 func (tr *tradecaseRoutes) AddPools(c *gin.Context) {
 	var body []byte
-	pools := &ListPools{}
+	pools := &listPools{}
 
 	err := c.BindJSON(body)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - AddPools")
-		errorResponse(c, http.StatusBadRequest, err.Error())
-
+		errorBadRequest(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - AddPools"),
+		)
 		return
 	}
 
 	err = json.Unmarshal(body, pools)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - AddPools")
-		errorResponse(c, http.StatusConflict, err.Error())
+		errorConflict(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - AddPools"),
+		)
+		return
 	}
 
 	err = tr.t.GetRepo().Store(c, body)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - Store")
-		errorResponse(c, http.StatusInsufficientStorage, err.Error())
-
+		errorInufficientStorage(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - Store"),
+		)
 		return
 	}
-	c.JSON(http.StatusOK, body)
+	respondCreated(c, body)
 
 	return
 }
@@ -105,33 +94,52 @@ func (tr *tradecaseRoutes) AddPools(c *gin.Context) {
 // @Summary     Get Pairs
 // @Description Get list of pairs
 // @ID          getPairs
-// @Tags  	    Provider, pairs
+// @Tags  	    Provider
 // @Accept      json
 // @Produce     json
-// @Param       request body requestPairs true "Get pairs"
-// @Success     200 {object} []entities.TradePair
-// @Failure     400 {object} response
-// @Failure     404 {object} response
+// @Param       request body tokenPair true "Get pairs"
+// @Success     200 {object} listPairs
+// @Failure     400 {object} responseErr
+// @Failure     404 {object} responseErr
 // @Router      /provider/pairs [get]
 func (tr *tradecaseRoutes) GetPairs(c *gin.Context) {
-	var req requestPairs
+	var req tokenPair
 
 	err := c.BindJSON(req)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - GetPairs")
-		errorResponse(c, http.StatusBadRequest, err.Error())
-
+		errorBadRequest(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - GetPairs"),
+		)
 		return
 	}
 
 	pairs, ok := tr.t.GetProvider().GetPairs(c, req.Protocol, req.TokenPair)
 	if !ok {
-		tr.l.Error("pairs not found", "rest - v1 - GetPairs")
-		errorResponse(c, http.StatusNotFound, "no pairs found")
-
+		errorNotFound(c, "no pairs found",
+			Log(tr.l.Error, "pairs not found", "rest - v1 - GetPairs"),
+		)
 		return
 	}
-	c.JSON(http.StatusOK, pairs)
+	respondOk(c, pairs)
+
+	return
+}
+
+// @Summary     List Pairs
+// @Description Get full list of pairs
+// @ID          listPairs
+// @Tags  	    Provider
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPairs
+// @Failure     400 {object} responseErr
+// @Failure     404 {object} responseErr
+// @Router      /provider/pairs/list [get]
+func (tr *tradecaseRoutes) ListPairs(c *gin.Context) {
+
+	pairs := tr.t.GetProvider().ListPairs(c)
+
+	respondOk(c, pairs)
 
 	return
 }
@@ -139,34 +147,34 @@ func (tr *tradecaseRoutes) GetPairs(c *gin.Context) {
 // @Summary     Add Pairs
 // @Description Add list of pairs
 // @ID          addPairs
-// @Tags  	    Provider, pairs
+// @Tags  	    Provider
 // @Accept      json
 // @Produce     json
-// @Param       request body []entities.TradePair true "Add pairs"
-// @Success     200 {object} []entities.TradePair
-// @Failure     400 {object} response
+// @Param       request body listPairs true "Add pairs"
+// @Success     201 {object} listPairs
+// @Failure     400 {object} responseErr
 // @Router      /provider/pairs [post]
 func (tr *tradecaseRoutes) AddPairs(c *gin.Context) {
-	var req []entities.TradePair
+	var req listPairs
 
-	err := c.BindJSON(req)
+	err := c.BindJSON(&req)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - AddPairs")
-		errorResponse(c, http.StatusBadRequest, err.Error())
-
+		errorBadRequest(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - AddPairs"),
+		)
 		return
 	}
 
-	for _, pair := range req {
+	for _, pair := range req.Pairs {
 		err := tr.t.GetProvider().AddPair(c, pair)
 		if err != nil {
-			tr.l.Error(err, "rest - v1 - AddPairs")
-			errorResponse(c, http.StatusBadRequest, err.Error())
-
+			errorBadRequest(c, err.Error(),
+				Log(tr.l.Error, err, "rest - v1 - AddPairs"),
+			)
 			return
 		}
 	}
-	c.JSON(http.StatusOK, req)
+	respondCreated(c, req)
 
 	return
 }
@@ -174,66 +182,127 @@ func (tr *tradecaseRoutes) AddPairs(c *gin.Context) {
 // @Summary     Add Tokens
 // @Description Add list of tokens
 // @ID          addTokens
-// @Tags  	    Contract, tokens
+// @Tags  	    Contract
 // @Accept      json
 // @Produce     json
-// @Param       request body []entities.Token true "Add tokens"
-// @Success     200 {object} []entities.Token
-// @Failure     400 {object} response
+// @Param       request body listTokens true "Add tokens"
+// @Success     201 {object} listTokens
+// @Failure     400 {object} responseErr
 // @Router      /contract/tokens [post]
 func (tr *tradecaseRoutes) AddTokens(c *gin.Context) {
-	var req []entities.Token
+	var req listTokens
 
-	err := c.BindJSON(req)
+	err := c.BindJSON(&req)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - AddTokens")
-		errorResponse(c, http.StatusBadRequest, err.Error())
-
+		errorBadRequest(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - AddTokens"),
+		)
 		return
 	}
 
-	for _, token := range req {
+	for _, token := range req.Tokens {
 		tr.t.GetContract().Add(token)
 	}
+	respondCreated(c, req)
 
-	c.JSON(http.StatusOK, req)
+	return
+}
+
+// @Summary     List Tokens
+// @Description Request token list
+// @ID          listTokens
+// @Tags  	    Contract
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listTokens
+// @Router      /contract/tokens [get]
+func (tr *tradecaseRoutes) ListTokens(c *gin.Context) {
+	tokens := tr.t.GetContract().List()
+	respondOk(c, tokens)
 
 	return
 }
 
 // @Summary     Get Tokens
-// @Description Request token list
+// @Description Request base token list
 // @ID          getTokens
-// @Tags  	    Contract, tokens
+// @Tags  	    Contract
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} []entities.Token
-// @Failure     507 {object} response
-// @Router      /contract/tokens [get]
-func (tr *tradecaseRoutes) GetTokens(c *gin.Context) {
+// @Success     200 {object} listTokens
+// @Failure     507 {object} responseErr
+// @Router      /contract/tokens/base [get]
+func (tr *tradecaseRoutes) GetBaseTokens(c *gin.Context) {
 	tokens, err := tr.t.GetContract().GetBaseTokens(c)
 	if err != nil {
-		tr.l.Error(err, "rest - v1 - GetTokens")
-		errorResponse(c, http.StatusInsufficientStorage, err.Error())
+		errorInufficientStorage(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - GetTokens"),
+		)
+		return
 	}
-
-	c.JSON(http.StatusOK, tokens)
+	respondOk(c, tokens)
 
 	return
 }
 
-func NewTradecaseRouter(h *gin.RouterGroup, t tradecase.TradeCase, l logger.Interface) {
+// @Summary     Load Tokens
+// @Description Load unknown tokens
+// @ID          loadTokens
+// @Tags  	    Trade
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listTokens
+// @Failure     507 {object} responseErr
+// @Router      /trade/tokens [get]
+func (tr *tradecaseRoutes) LoadTokens(c *gin.Context) {
+	err := tr.t.SetUnknownTokens(c)
+	if err != nil {
+		errorInufficientStorage(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - GetTokens"),
+		)
+		return
+	}
+	respondOk(c, tr.t.GetContract().List())
+
+	return
+}
+
+// @Summary     Load Pairs
+// @Description Load profitable pairs
+// @ID          loadPairs
+// @Tags  	    Trade
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPairs
+// @Failure     507 {object} responseErr
+// @Router      /trade/pairs [get]
+func (tr *tradecaseRoutes) LoadPairs(c *gin.Context) {
+	err := tr.t.SetProfitablePairs(c)
+	if err != nil {
+		errorInufficientStorage(c, err.Error(),
+			Log(tr.l.Error, err, "rest - v1 - GetTokens"),
+		)
+		return
+	}
+	respondOk(c, tr.t.GetProvider().ListPairs(c))
+
+	return
+}
+
+func NewTradecaseRouter(h *gin.RouterGroup, t tc.TradeCase, l log.Interface) {
 	routes := &tradecaseRoutes{t, l}
 
 	NewContractRouter(h, *routes)
 	NewStorageRouter(h, *routes)
 	NewProviderRouter(h, *routes)
+	NewTradeRouter(h, *routes)
 }
 
 func NewContractRouter(h *gin.RouterGroup, tr tradecaseRoutes) {
 	handler := h.Group("contract")
 	{
-		handler.GET("/tokens", tr.GetTokens)
+		handler.GET("/tokens/base", tr.GetBaseTokens)
+		handler.GET("/tokens", tr.ListTokens)
 		handler.POST("/tokens", tr.AddTokens)
 	}
 }
@@ -247,9 +316,18 @@ func NewStorageRouter(h *gin.RouterGroup, tr tradecaseRoutes) {
 }
 
 func NewProviderRouter(h *gin.RouterGroup, tr tradecaseRoutes) {
-	handler := h.Group("storage")
+	handler := h.Group("provider")
 	{
 		handler.GET("/pairs", tr.GetPairs)
+		handler.GET("/pairs/list", tr.ListPairs)
 		handler.POST("/pairs", tr.AddPairs)
+	}
+}
+
+func NewTradeRouter(h *gin.RouterGroup, tr tradecaseRoutes) {
+	handler := h.Group("trade")
+	{
+		handler.GET("/tokens", tr.LoadTokens)
+		handler.GET("/pairs", tr.LoadPairs)
 	}
 }

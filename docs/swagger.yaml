@@ -1,10 +1,20 @@
 basePath: /v1
 definitions:
-  Error:
+  ErrorResponse:
+    description: Error response object
     properties:
       error:
         example: message
         type: string
+    type: object
+  ListPairs:
+    description: Request list of trading pairs
+    properties:
+      pairs:
+        description: list of trade pools
+        items:
+          $ref: '#/definitions/entities.TradePair'
+        type: array
     type: object
   ListPools:
     description: Request list of trading pools
@@ -26,6 +36,15 @@ definitions:
         allOf:
         - $ref: '#/definitions/entities.TokenPair'
         description: pair of tokens
+    type: object
+  TokenList:
+    description: Request list of tokens
+    properties:
+      tokens:
+        description: list of tokens
+        items:
+          $ref: '#/definitions/entities.Token'
+        type: array
     type: object
   entities.SwapProtocol:
     properties:
@@ -81,24 +100,17 @@ paths:
       consumes:
       - application/json
       description: Request token list
-      operationId: getTokens
+      operationId: listTokens
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/entities.Token'
-            type: array
-        "507":
-          description: Insufficient Storage
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Get Tokens
+            $ref: '#/definitions/TokenList'
+      summary: List Tokens
       tags:
       - Contract
-      - tokens
     post:
       consumes:
       - application/json
@@ -110,26 +122,41 @@ paths:
         name: request
         required: true
         schema:
-          items:
-            $ref: '#/definitions/entities.Token'
-          type: array
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TokenList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Tokens
+      tags:
+      - Contract
+  /contract/tokens/base:
+    get:
+      consumes:
+      - application/json
+      description: Request base token list
+      operationId: getTokens
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/entities.Token'
-            type: array
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/TokenList'
+        "507":
+          description: Insufficient Storage
           schema:
-            $ref: '#/definitions/Error'
-      summary: Add Tokens
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get Tokens
       tags:
       - Contract
-      - tokens
   /provider/pairs:
     get:
       consumes:
@@ -149,21 +176,18 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/entities.TradePair'
-            type: array
+            $ref: '#/definitions/ListPairs'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       summary: Get Pairs
       tags:
       - Provider
-      - pairs
     post:
       consumes:
       - application/json
@@ -175,26 +199,45 @@ paths:
         name: request
         required: true
         schema:
-          items:
-            $ref: '#/definitions/entities.TradePair'
-          type: array
+          $ref: '#/definitions/ListPairs'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ListPairs'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Pairs
+      tags:
+      - Provider
+  /provider/pairs/list:
+    get:
+      consumes:
+      - application/json
+      description: Get full list of pairs
+      operationId: listPairs
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/entities.TradePair'
-            type: array
+            $ref: '#/definitions/ListPairs'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Error'
-      summary: Add Pairs
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: List Pairs
       tags:
       - Provider
-      - pairs
   /storage/pools:
     get:
       consumes:
@@ -208,22 +251,17 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ListPools'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/Error'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       summary: Get Pools
       tags:
       - Storage
-      - pools
     post:
       consumes:
       - application/json
@@ -235,32 +273,67 @@ paths:
         name: request
         required: true
         schema:
-          items:
-            $ref: '#/definitions/entities.TradePool'
-          type: array
+          $ref: '#/definitions/ListPools'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ListPools'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Pools
+      tags:
+      - Storage
+  /trade/pairs:
+    get:
+      consumes:
+      - application/json
+      description: Load profitable pairs
+      operationId: loadPairs
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/entities.TradePool'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Error'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ListPairs'
         "507":
           description: Insufficient Storage
           schema:
-            $ref: '#/definitions/Error'
-      summary: Add Pools
+            $ref: '#/definitions/ErrorResponse'
+      summary: Load Pairs
       tags:
-      - Storage
-      - pools
+      - Trade
+  /trade/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Load unknown tokens
+      operationId: loadTokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Load Tokens
+      tags:
+      - Trade
 swagger: "2.0"
