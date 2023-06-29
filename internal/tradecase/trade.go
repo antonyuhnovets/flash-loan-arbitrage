@@ -11,6 +11,7 @@ type TradeCase struct {
 	repo     TradeRepo
 	provider TradeProvider
 	contract SmartContract
+	parser   Parser
 }
 
 func New(r TradeRepo, p TradeProvider, c SmartContract,
@@ -23,8 +24,12 @@ func New(r TradeRepo, p TradeProvider, c SmartContract,
 	}
 }
 
-func (tc *TradeCase) GetRepo() TradeRepo {
-	return tc.repo
+func (tc *TradeCase) SetParser(p Parser) {
+	tc.parser = p
+}
+
+func (tc *TradeCase) GetParser() Parser {
+	return tc.parser
 }
 
 func (tc *TradeCase) GetContract() SmartContract {
@@ -33,6 +38,24 @@ func (tc *TradeCase) GetContract() SmartContract {
 
 func (tc *TradeCase) GetProvider() TradeProvider {
 	return tc.provider
+}
+
+func (tc *TradeCase) GetRepo() TradeRepo {
+	return tc.repo
+}
+
+func (tc *TradeCase) ParseWrite(ctx context.Context) error {
+	tc.parser.Parse()
+
+	poolMap := tc.parser.ListPools()
+
+	for _, pools := range poolMap {
+		err := tc.repo.StorePools(ctx, pools)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (tc *TradeCase) SetUnknownTokens(ctx context.Context,

@@ -22,6 +22,9 @@ type TradeRepo interface {
 		[]TradePool,
 		error,
 	)
+	StorePools(c.Context, []TradePool,
+	) error
+
 	StorePool(c.Context, TradePool,
 	) error
 
@@ -91,4 +94,13 @@ type SmartContract interface {
 	List() []Token
 
 	Clear()
+}
+
+type Parser interface {
+	Parse() error
+	AddPair(TokenPair) error
+	RemovePair(TokenPair) error
+	GetPairPools(TokenPair) ([]TradePool, error)
+	AddPairPools(TokenPair, []TradePool)
+	ListPools() map[TokenPair][]TradePool
 }

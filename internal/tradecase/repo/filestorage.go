@@ -120,6 +120,19 @@ func (fs *FileStorage) StorePool(
 	return nil
 }
 
+func (fs *FileStorage) StorePools(
+	ctx c.Context, pools []TradePool,
+) error {
+	for _, pool := range pools {
+		err := fs.StorePool(ctx, pool)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (fs *FileStorage) ListPools(
 	ctx c.Context,
 ) (
