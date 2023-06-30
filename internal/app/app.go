@@ -18,6 +18,7 @@ import (
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/parser"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/provider"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/repo"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
@@ -42,20 +43,85 @@ func Run(conf *config.Config) {
 	cAdress := common.HexToAddress(
 		conf.Contract.Address,
 	)
-	c, err := cl.DialContract(cAdress)
+	ctr, err := cl.DialContract(cAdress)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// tradecase
 	contract := contract.NewContract(
-		cAdress, c, make([]entities.Token, 0),
+		cAdress, ctr,
+		make([]entities.TradePair, 0),
 	)
 	provider := provider.NewTradeProvider(
-		ctx, cl, entities.TradePair{},
+		ctx, cl,
 	)
-	repository := repo.UseFile("./storage_test/test.json")
-	tc := tradecase.New(repository, provider, contract)
+	repository := repo.NewStorage()
+	repository.UseFile(
+		"pools",
+		"./storage_test/pools_test.json",
+	)
+	repository.UseFile(
+		"tokens",
+		"./storage_test/tokens_test.json",
+	)
+	tc := tradecase.New(
+		repository,
+		provider,
+		contract,
+	)
+
+	tokenPair := entities.TokenPair{
+		Token0: entities.Token{
+			Name:    "WETH",
+			Address: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+			WeiVal:  1000000000000000000,
+		},
+		Token1: entities.Token{
+			Name:    "LINK",
+			Address: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
+			WeiVal:  1000000000000000000,
+		},
+	}
+
+	tc.GetRepo().AddToken(ctx, "tokens", tokenPair.Token0)
+	tc.GetRepo().AddToken(ctx, "tokens", tokenPair.Token1)
+
+	err = tc.SetTokens(ctx, "tokens")
+
+	pairList := make([]entities.TokenPair, 0)
+	pairList = append(pairList, tokenPair)
+
+	// parseUni := parser.NewUniV2(entities.SwapProtocol{
+	// 	Name:       "Uniswap-V2",
+	// 	Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+	// 	SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+	// },
+	// 	pairList,
+	// )
+	// tc.SetParser(&parseUni)
+	// tc.ParseWrite(ctx, "pools", pairList)
+
+	// parseSushi := parser.NewSushiV2(entities.SwapProtocol{
+	// 	Name:       "Sushiswap-V2",
+	// 	Factory:    "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
+	// 	SwapRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+	// },
+	// 	pairList,
+	// )
+	// tc.SetParser(&parseSushi)
+	// tc.ParseWrite(ctx, "pools", pairList)
+
+	parseUniV3 := parser.NewUniV3(
+		pairList,
+		entities.SwapProtocol{
+			Name:       "Uniswap-V3",
+			Factory:    "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+			SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+		},
+	)
+	tc.SetParser(&parseUniV3)
+	tc.ParseWrite(ctx, "pools", pairList)
 
 	// logger
 	l := logger.New(conf.Log.Level)
@@ -69,21 +135,34 @@ func Run(conf *config.Config) {
 	)
 
 	// waiting signal
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	interrupt := make(
+		chan os.Signal,
+		1,
+	)
+	signal.Notify(
+		interrupt,
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
 
 	// run
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())
 	case err = <-httpServer.Notify():
-		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+		l.Error(fmt.Errorf(
+			"app - Run - httpServer.Notify: %w",
+			err,
+		))
 	}
 
 	// Shutdown
 	err = httpServer.Shutdown()
 	if err != nil {
-		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+		l.Error(fmt.Errorf(
+			"app - Run - httpServer.Shutdown: %w",
+			err,
+		))
 	}
 
 	// err = tc.Trade(ctx)
@@ -99,8 +178,14 @@ func IsDeployed(address string) bool {
 }
 
 func Deploy(conf *config.Config) (string, error) {
-	arg := fmt.Sprintf("network=%s", conf.Blockchain.Name)
-	arg1 := fmt.Sprintf("contract=%s", conf.Contract.Address)
+	arg := fmt.Sprintf(
+		"network=%s",
+		conf.Blockchain.Name,
+	)
+	arg1 := fmt.Sprintf(
+		"contract=%s",
+		conf.Contract.Address,
+	)
 
 	cmd := exec.Command("make", "deploy", arg, arg1)
 	cmd.Stderr = os.Stderr
@@ -117,7 +202,10 @@ func Deploy(conf *config.Config) (string, error) {
 }
 
 func Build(conf *config.Config) error {
-	arg := fmt.Sprintf("contract=%s", conf.Contract.Address)
+	arg := fmt.Sprintf(
+		"contract=%s",
+		conf.Contract.Address,
+	)
 
 	cmd := exec.Command("make", "build", arg)
 	cmd.Stderr = os.Stderr

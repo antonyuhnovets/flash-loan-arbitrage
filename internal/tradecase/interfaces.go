@@ -7,100 +7,139 @@ import (
 )
 
 type TradeRepo interface {
-	Store(c.Context, []byte,
+	Store(
+		c.Context, string, []byte,
 	) error
 
-	Read(c.Context) (
-		[]byte,
-		error,
-	)
-	GetByTokens(c.Context, TokenPair) (
-		[]TradePool,
-		error,
-	)
-	ListPools(c.Context) (
-		[]TradePool,
-		error,
-	)
-	StorePools(c.Context, []TradePool,
+	Read(
+		c.Context, string,
+	) ([]byte, error)
+
+	GetByTokens(
+		c.Context, string, TokenPair,
+	) ([]TradePool, error)
+
+	ListPools(
+		c.Context, string,
+	) ([]TradePool, error)
+
+	StorePools(
+		c.Context, string, []TradePool,
 	) error
 
-	StorePool(c.Context, TradePool,
+	AddPool(
+		c.Context, TradePool, string,
 	) error
 
-	GetTokenByAddress(c.Context, string) (
-		Token,
-		error,
-	)
+	StoreTokens(
+		c.Context, string, []Token,
+	) error
 
-	Clear(c.Context) error
+	AddToken(
+		c.Context, string, Token,
+	) error
+
+	ListTokens(
+		c.Context, string,
+	) ([]Token, error)
+
+	GetTokenByAddress(
+		c.Context, string, string,
+	) (Token, error)
+
+	Clear(
+		c.Context, string,
+	) error
 }
 
 type TradeProvider interface {
-	AddPair(c.Context, TradePair,
+	AddToken(
+		c.Context, Token,
 	) error
 
-	FindPair(c.Context, TradePair) (
-		int,
-		bool,
-	)
-	RemovePair(c.Context, TradePair,
+	GetToken(
+		c.Context, string,
+	) (Token, error)
+
+	RemoveToken(
+		c.Context, Token,
 	) error
 
-	GetPairs(c.Context, SwapProtocol, TokenPair) (
-		[]TradePair,
-		bool,
-	)
+	SetTokens(
+		c.Context, []Token,
+	) error
 
-	SetPairs(c.Context, []TradePair) error
-
-	ListPairs(c.Context,
-	) []TradePair
+	ListTokens(
+		c.Context,
+	) []Token
 
 	Clear()
 }
 
 type SmartContract interface {
-	AddBaseToken(c.Context, Token) (
-		interface{},
-		error,
-	)
-	BaseTokensContains(c.Context, Token) (
-		bool,
-		error,
-	)
-	RemoveBaseToken(c.Context, Token) (
-		interface{},
-		error,
-	)
-	GetBaseTokens(c.Context) (
-		[]Token,
-		error,
-	)
+	AddBaseToken(
+		c.Context, Token,
+	) (interface{}, error)
 
-	GetProfit(c.Context, TradePair) (
-		int,
-		error,
-	)
+	BaseTokensContains(
+		c.Context, Token,
+	) (bool, error)
 
-	Add(Token)
+	RemoveBaseToken(
+		c.Context, Token,
+	) (interface{}, error)
 
-	Remove(Token)
+	GetBaseTokens(
+		c.Context,
+	) ([]string, error)
 
-	Get(string) (Token, bool)
+	GetProfit(
+		c.Context, TradePair,
+	) (int, error)
 
-	Tokens() map[string]Token
+	AddPair(
+		c.Context, TradePair,
+	) error
 
-	List() []Token
+	RemovePair(
+		c.Context, string, string,
+	) error
 
-	Clear()
+	GetPair(
+		c.Context, string, string,
+	) (TradePair, error)
+
+	GetPairs(
+		c.Context, SwapProtocol, TokenPair,
+	) ([]TradePair, bool)
+
+	SetPairs(
+		c.Context, []TradePair,
+	) error
+
+	ListPairs(c.Context) []TradePair
+
+	ClearPairs(c.Context)
 }
 
 type Parser interface {
-	Parse() error
-	AddPair(TokenPair) error
-	RemovePair(TokenPair) error
-	GetPairPools(TokenPair) ([]TradePool, error)
-	AddPairPools(TokenPair, []TradePool)
-	ListPools() map[TokenPair][]TradePool
+	Parse([]TokenPair) error
+
+	AddPool(
+		TradePool,
+	) error
+
+	RemovePool(
+		TradePool,
+	) error
+
+	GetPairPools(
+		TokenPair,
+	) ([]TradePool, error)
+
+	AddPools(
+		[]TradePool,
+	)
+
+	ListPools() []TradePool
 }

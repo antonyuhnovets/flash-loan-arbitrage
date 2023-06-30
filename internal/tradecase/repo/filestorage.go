@@ -11,84 +11,114 @@ import (
 )
 
 type FileStorage struct {
-	path string
-	// f    *os.File
+	files map[string]string
 }
 
-func UseFile(path string) *FileStorage {
-	return &FileStorage{
-		path: path,
+func NewStorage() (
+	fs *FileStorage,
+) {
+	fs = &FileStorage{
+		files: make(map[string]string),
 	}
+
+	return
 }
 
-func NewFile(
-	path string,
+func (fs *FileStorage) UseFile(
+	name, path string,
+) {
+	fs.files[name] = path
+	// fs.endObj(name, path)
+}
+
+func (fs *FileStorage) NewFile(
+	name, path string,
 ) (
-	*FileStorage,
-	error,
+	err error,
 ) {
 	f, err := os.Create(path)
-	defer f.Close()
 	if err != nil {
-		return nil, err
+		return
 	}
+	defer f.Close()
 
-	return &FileStorage{path}, nil
+	fs.UseFile(
+		name,
+		path,
+	)
+
+	fs.Store(
+		c.Background(),
+		name,
+		[]byte("[\n"),
+	)
+	err = fs.Store(
+		c.Background(),
+		name,
+		[]byte("]"),
+	)
+
+	return
 }
 
 func (fs *FileStorage) Store(
-	ctx c.Context, item []byte,
-) error {
-	f, err := os.OpenFile(fs.path,
-		os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	index, err := f.Write(item)
-	if err != nil {
-		return err
-	}
-
-	log.Printf(
-		"%b bytes saved to file",
-		index,
+	ctx c.Context,
+	where string,
+	item []byte,
+) (
+	err error,
+) {
+	f, err := os.OpenFile(
+		fs.files[where],
+		os.O_APPEND|os.O_RDWR,
+		0644,
 	)
+	if err != nil {
+		return
+	}
 
-	return nil
+	n, err := f.Write(item)
+	log.Println(n)
+
+	return
 }
 
 func (fs *FileStorage) Read(
 	ctx c.Context,
+	where string,
 ) (
-	[]byte,
-	error,
+	b []byte,
+	err error,
 ) {
-	var b []byte
-	b, err := os.ReadFile(fs.path)
-	if err != nil {
-		return nil, err
-	}
+	b, err = os.ReadFile(
+		fs.files[where],
+	)
 
-	return b, nil
+	return
 }
 
 func (fs *FileStorage) GetByTokens(
-	ctx c.Context, tokens TokenPair,
+	ctx c.Context,
+	where string,
+	tokens TokenPair,
 ) (
-	[]TradePool,
-	error,
+	res []TradePool,
+	err error,
 ) {
-	res := make([]TradePool, 0)
-
-	out, err := fs.Read(ctx)
+	out, err := fs.Read(
+		ctx,
+		where,
+	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	err = json.Unmarshal(out, &res)
+	err = json.Unmarshal(
+		out,
+		&res,
+	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	for n, pool := range res {
@@ -100,84 +130,245 @@ func (fs *FileStorage) GetByTokens(
 		}
 	}
 
-	return res, nil
+	return
 }
 
-func (fs *FileStorage) StorePool(
-	ctx c.Context, pool TradePool,
-) error {
+func (fs *FileStorage) AddPool(
+	ctx c.Context,
+	pool TradePool,
+	where string,
+) (
+	err error,
+) {
 	b, err := json.Marshal(pool)
 	if err != nil {
-		return err
+		return
 	}
 
-	data := string(b) + "\n"
-	err = fs.Store(ctx, []byte(data))
+	err = fs.rmCloser(
+		ctx,
+		where,
+		[]byte(string(b[0:])+"\n"),
+	)
 	if err != nil {
-		return err
+		return
+	}
+	err = fs.Store(
+		ctx,
+		where,
+		[]byte("]"),
+	)
+
+	return
+}
+
+func (fs *FileStorage) rmCloser(
+	ctx c.Context,
+	where string,
+	item []byte,
+) (
+	err error,
+) {
+	f, err := os.OpenFile(
+		fs.files[where],
+		os.O_RDWR,
+		0644,
+	)
+	if err != nil {
+		return
+	}
+	b, err := fs.Read(ctx, where)
+	if err != nil {
+		return
 	}
 
-	return nil
+	if string(b[len(b)-3]) != "[" {
+		b = append(b[:len(b)-2], []byte(",\n")...)
+	} else {
+		b = append(b[:len(b)-2], []byte("\n")...)
+	}
+	b = append(b, item...)
+
+	n, err := f.Write(b)
+	log.Println(n)
+
+	return
 }
 
 func (fs *FileStorage) StorePools(
-	ctx c.Context, pools []TradePool,
-) error {
+	ctx c.Context,
+	where string,
+	pools []TradePool,
+) (
+	err error,
+) {
 	for _, pool := range pools {
-		err := fs.StorePool(ctx, pool)
+		err = fs.AddPool(
+			ctx,
+			pool,
+			where,
+		)
 		if err != nil {
-			return err
+			return
 		}
 	}
 
-	return nil
+	return
 }
 
 func (fs *FileStorage) ListPools(
 	ctx c.Context,
+	where string,
 ) (
-	[]TradePool,
-	error,
+	pools []TradePool,
+	err error,
 ) {
-	pools := make([]TradePool, 0)
-
-	out, err := fs.Read(ctx)
+	out, err := fs.Read(
+		ctx,
+		where,
+	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	err = json.Unmarshal(out, &pools)
+	err = json.Unmarshal(
+		out,
+		&pools,
+	)
+
+	return
+}
+
+func (fs *FileStorage) AddToken(
+	ctx c.Context,
+	where string,
+	token Token,
+) (
+	err error,
+) {
+	b, err := json.Marshal(token)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return pools, nil
+	err = fs.rmCloser(
+		ctx,
+		where,
+		[]byte(string(b[0:])+"\n"),
+	)
+	if err != nil {
+		return
+	}
+	err = fs.Store(
+		ctx,
+		where,
+		[]byte("]"),
+	)
+
+	return
+}
+
+func (fs *FileStorage) StoreTokens(
+	ctx c.Context,
+	where string,
+	tokens []Token,
+) (
+	err error,
+) {
+	for _, token := range tokens {
+		err = fs.AddToken(
+			ctx,
+			where,
+			token,
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (fs *FileStorage) ListTokens(
+	ctx c.Context,
+	where string,
+) (
+	tokens []Token,
+	err error,
+) {
+	b, err := fs.Read(ctx, where)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(b, &tokens)
+
+	return
 }
 
 func (fs *FileStorage) GetTokenByAddress(
-	ctx c.Context, addr string,
+	ctx c.Context,
+	where, address string,
 ) (
-	Token,
-	error,
+	token Token,
+	err error,
 ) {
-	pools, err := fs.ListPools(ctx)
+	pools, err := fs.ListPools(
+		ctx,
+		where,
+	)
 	if err != nil {
-		return Token{}, err
+		return
 	}
 
 	for _, pool := range pools {
-		if pool.Pair.Token0.Address == addr {
-			return pool.Pair.Token0, nil
-		} else if pool.Pair.Token1.Address == addr {
-			return pool.Pair.Token1, nil
+		token = *getTokenFromPair(
+			pool.Pair,
+			address,
+		)
+		if &token != nil {
+			return
 		} else {
 			continue
 		}
 	}
 
-	return Token{}, fmt.Errorf("token with address %s not found", addr)
+	err = fmt.Errorf(
+		"token with address %s not found\n",
+		address,
+	)
+
+	return
 }
 
-func (fs *FileStorage) Clear(ctx c.Context) error {
-	return os.Truncate(fs.path, 0)
+func (fs *FileStorage) Clear(
+	ctx c.Context,
+	where string,
+) (
+	err error,
+) {
+	err = os.Truncate(
+		fs.files[where],
+		0,
+	)
+
+	return
+}
+
+func getTokenFromPair(
+	pair TokenPair,
+	addr string,
+) (
+	token *Token,
+) {
+	switch addr {
+	case pair.Token0.Address:
+		token = &pair.Token0
+	case pair.Token1.Address:
+		token = &pair.Token1
+	default:
+		token = nil
+	}
+
+	return
 }

@@ -19,100 +19,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contract/tokens": {
-            "get": {
-                "description": "Request token list",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract"
-                ],
-                "summary": "List Tokens",
-                "operationId": "listTokens",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/TokenList"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Add list of tokens",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract"
-                ],
-                "summary": "Add Tokens",
-                "operationId": "addTokens",
-                "parameters": [
-                    {
-                        "description": "Add tokens",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TokenList"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/TokenList"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/contract/tokens/base": {
-            "get": {
-                "description": "Request base token list",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Contract"
-                ],
-                "summary": "Get Tokens",
-                "operationId": "getTokens",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/TokenList"
-                        }
-                    },
-                    "507": {
-                        "description": "Insufficient Storage",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/provider/pairs": {
+        "/contract/pairs": {
             "get": {
                 "description": "Get list of pairs",
                 "consumes": [
@@ -122,7 +29,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider"
+                    "Contract"
                 ],
                 "summary": "Get Pairs",
                 "operationId": "getPairs",
@@ -167,7 +74,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider"
+                    "Contract"
                 ],
                 "summary": "Add Pairs",
                 "operationId": "addPairs",
@@ -198,7 +105,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/provider/pairs/list": {
+        "/contract/pairs/list": {
             "get": {
                 "description": "Get full list of pairs",
                 "consumes": [
@@ -208,7 +115,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider"
+                    "Contract"
                 ],
                 "summary": "List Pairs",
                 "operationId": "listPairs",
@@ -227,6 +134,129 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contract/tokens/base": {
+            "get": {
+                "description": "Request base token list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Contract"
+                ],
+                "summary": "Get Tokens",
+                "operationId": "getTokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/parser/pools": {
+            "get": {
+                "description": "Save pools from parser to storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse"
+                ],
+                "summary": "Store parsed pools",
+                "operationId": "ParseWrite",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/provider/tokens": {
+            "get": {
+                "description": "Request token list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Provider"
+                ],
+                "summary": "List Tokens",
+                "operationId": "listTokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add list of tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Provider"
+                ],
+                "summary": "Add Tokens",
+                "operationId": "addTokens",
+                "parameters": [
+                    {
+                        "description": "Add tokens",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -323,7 +353,7 @@ const docTemplate = `{
         },
         "/trade/pairs": {
             "get": {
-                "description": "Load profitable pairs",
+                "description": "Load profitable pairs from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -353,7 +383,7 @@ const docTemplate = `{
         },
         "/trade/tokens": {
             "get": {
-                "description": "Load unknown tokens",
+                "description": "Load unknown tokens from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -513,7 +543,7 @@ const docTemplate = `{
                 "pair": {
                     "$ref": "#/definitions/entities.TokenPair"
                 },
-                "tradeProvider": {
+                "protocol": {
                     "$ref": "#/definitions/entities.SwapProtocol"
                 }
             }

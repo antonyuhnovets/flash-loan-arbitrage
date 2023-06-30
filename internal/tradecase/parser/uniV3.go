@@ -2,41 +2,42 @@ package parser
 
 import (
 	"fmt"
+	"math/big"
 
 	uni "github.com/ackermanx/ethclient/uniswap"
 
 	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 )
 
-type ParserUniV2 struct {
-	Protocol SwapProtocol `json:"protocol"`
-	Pools    []TradePool  `json:"pools"`
+type ParserUniV3 struct {
+	Pools    []TradePool
+	Protocol SwapProtocol
 }
 
-func NewUniV2(
-	protocol SwapProtocol,
+func NewUniV3(
 	tokens []TokenPair,
+	protocol SwapProtocol,
 ) (
-	parser ParserUniV2,
+	parser ParserUniV3,
 ) {
 	poolList := make(
 		[]TradePool,
 		0,
 	)
 
-	parser = ParserUniV2{
-		protocol,
+	parser = ParserUniV3{
 		poolList,
+		protocol,
 	}
 
 	return
 }
 
-func (pu *ParserUniV2) Parse(pairs []TokenPair) (
+func (pu *ParserUniV3) Parse(pairs []TokenPair) (
 	err error,
 ) {
 	for _, pair := range pairs {
-		addr, err := getUniPoolAddr(pair)
+		addr, err := getUniV3PoolAddr(pair)
 		if err != nil {
 			return err
 		}
@@ -53,7 +54,7 @@ func (pu *ParserUniV2) Parse(pairs []TokenPair) (
 	return
 }
 
-func (pu *ParserUniV2) AddPool(
+func (pu *ParserUniV3) AddPool(
 	pool TradePool,
 ) (
 	err error,
@@ -70,7 +71,7 @@ func (pu *ParserUniV2) AddPool(
 	return
 }
 
-func (pu *ParserUniV2) RemovePool(
+func (pu *ParserUniV3) RemovePool(
 	pool TradePool,
 ) (
 	err error,
@@ -92,7 +93,7 @@ func (pu *ParserUniV2) RemovePool(
 	return
 }
 
-func (pu *ParserUniV2) GetPairPools(
+func (pu *ParserUniV3) GetPairPools(
 	pair TokenPair,
 ) (
 	pools []TradePool,
@@ -114,7 +115,7 @@ func (pu *ParserUniV2) GetPairPools(
 	return
 }
 
-func (pu *ParserUniV2) AddPools(
+func (pu *ParserUniV3) AddPools(
 	pools []TradePool,
 ) {
 	for _, pool := range pools {
@@ -124,7 +125,7 @@ func (pu *ParserUniV2) AddPools(
 	return
 }
 
-func (pu *ParserUniV2) ListPools() (
+func (pu *ParserUniV3) ListPools() (
 	listPools []TradePool,
 ) {
 	listPools = pu.Pools
@@ -132,7 +133,7 @@ func (pu *ParserUniV2) ListPools() (
 	return
 }
 
-func (pu *ParserUniV2) containPool(
+func (pu *ParserUniV3) containPool(
 	pool TradePool,
 ) (
 	index int,
@@ -151,7 +152,7 @@ func (pu *ParserUniV2) containPool(
 	return
 }
 
-func (pu *ParserUniV2) containPair(
+func (pu *ParserUniV3) containPair(
 	pair TokenPair,
 ) (
 	index int,
@@ -170,15 +171,16 @@ func (pu *ParserUniV2) containPair(
 	return
 }
 
-func getUniPoolAddr(
+func getUniV3PoolAddr(
 	pair TokenPair,
 ) (
 	address string,
 	err error,
 ) {
-	pAddr, err := uni.CalculatePoolAddressV2(
+	pAddr, err := uni.CalculatePoolAddressV3(
 		pair.Token0.Address,
 		pair.Token1.Address,
+		big.NewInt(3000),
 	)
 	if err != nil {
 		return

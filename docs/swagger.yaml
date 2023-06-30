@@ -84,7 +84,7 @@ definitions:
         type: string
       pair:
         $ref: '#/definitions/entities.TokenPair'
-      tradeProvider:
+      protocol:
         $ref: '#/definitions/entities.SwapProtocol'
     type: object
 info:
@@ -95,69 +95,7 @@ info:
   title: Flash Loan Arbitrage bot
   version: "1.0"
 paths:
-  /contract/tokens:
-    get:
-      consumes:
-      - application/json
-      description: Request token list
-      operationId: listTokens
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/TokenList'
-      summary: List Tokens
-      tags:
-      - Contract
-    post:
-      consumes:
-      - application/json
-      description: Add list of tokens
-      operationId: addTokens
-      parameters:
-      - description: Add tokens
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/TokenList'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/TokenList'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Add Tokens
-      tags:
-      - Contract
-  /contract/tokens/base:
-    get:
-      consumes:
-      - application/json
-      description: Request base token list
-      operationId: getTokens
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/TokenList'
-        "507":
-          description: Insufficient Storage
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Get Tokens
-      tags:
-      - Contract
-  /provider/pairs:
+  /contract/pairs:
     get:
       consumes:
       - application/json
@@ -187,7 +125,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Pairs
       tags:
-      - Provider
+      - Contract
     post:
       consumes:
       - application/json
@@ -213,8 +151,8 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Pairs
       tags:
-      - Provider
-  /provider/pairs/list:
+      - Contract
+  /contract/pairs/list:
     get:
       consumes:
       - application/json
@@ -236,6 +174,88 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: List Pairs
+      tags:
+      - Contract
+  /contract/tokens/base:
+    get:
+      consumes:
+      - application/json
+      description: Request base token list
+      operationId: getTokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get Tokens
+      tags:
+      - Contract
+  /parser/pools:
+    get:
+      consumes:
+      - application/json
+      description: Save pools from parser to storage
+      operationId: ParseWrite
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListPools'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Store parsed pools
+      tags:
+      - Parse
+  /provider/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Request token list
+      operationId: listTokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+      summary: List Tokens
+      tags:
+      - Provider
+    post:
+      consumes:
+      - application/json
+      description: Add list of tokens
+      operationId: addTokens
+      parameters:
+      - description: Add tokens
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TokenList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Tokens
       tags:
       - Provider
   /storage/pools:
@@ -300,7 +320,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Load profitable pairs
+      description: Load profitable pairs from storage
       operationId: loadPairs
       produces:
       - application/json
@@ -320,7 +340,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Load unknown tokens
+      description: Load unknown tokens from storage
       operationId: loadTokens
       produces:
       - application/json

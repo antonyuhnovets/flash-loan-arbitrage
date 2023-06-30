@@ -1,15 +1,15 @@
 package entities
 
 type Token struct {
-	Name    string `json:"name" bson:"name" swaggertype:"string"`
-	Address string `json:"address" bson:"address" swaggertype:"string"`
-	WeiVal  int    `json:"wei" bson:"wei" swaggertype:"integer"`
+	Name    string `json:"name" bson:"name"`
+	Address string `json:"address" bson:"address"`
+	WeiVal  int    `json:"wei" bson:"wei"`
 }
 
 type SwapProtocol struct {
-	Name       string `json:"protocolName" bson:"protocolName" swaggertype:"string"`
-	Factory    string `json:"factoryAddress" bson:"factoryAddress" swaggertype:"string"`
-	SwapRouter string `json:"swapRouter" bson:"swapRouter" swaggertype:"string"`
+	Name       string `json:"protocolName"`
+	Factory    string `json:"factoryAddress"`
+	SwapRouter string `json:"swapRouter"`
 }
 
 type TokenPair struct {
@@ -18,9 +18,9 @@ type TokenPair struct {
 }
 
 type TradePool struct {
-	SwapProtocol `json:"tradeProvider"`
-	Address      string    `json:"address" bson:"address" swaggertype:"string"`
-	Pair         TokenPair `json:"pair" bson:"pair"`
+	Address  string       `json:"address"`
+	Pair     TokenPair    `json:"pair"`
+	Protocol SwapProtocol `json:"protocol"`
 }
 
 type TradePair struct {

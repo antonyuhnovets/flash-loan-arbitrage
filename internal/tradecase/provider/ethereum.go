@@ -13,129 +13,146 @@ type ethClient interface {
 }
 
 type TradeProvider struct {
-	Client    ethClient
-	PoolPairs []TradePair `json:"poolPairs"`
+	Client ethClient
+	Tokens []Token `json:"tokens"`
 }
 
 func NewTradeProvider(
-	ctx c.Context, client ethClient, pairs ...TradePair,
-) *TradeProvider {
-
-	return &TradeProvider{
-		Client:    client,
-		PoolPairs: pairs,
-	}
-}
-
-func (tp *TradeProvider) AddPair(
-	ctx c.Context, pool TradePair,
-) error {
-	if _, ok := tp.FindPair(ctx, pool); ok {
-		return fmt.Errorf("already in list")
-	}
-	tp.PoolPairs = append(tp.PoolPairs, pool)
-
-	return nil
-}
-
-func (tp *TradeProvider) FindPair(
-	ctx c.Context, pool TradePair,
-) (
-	int,
-	bool,
-) {
-	for n, p := range tp.PoolPairs {
-		if p == pool {
-			return n, true
-		}
-	}
-
-	return 0, false
-}
-
-func (tp *TradeProvider) RemovePair(
-	ctx c.Context, pool TradePair,
-) error {
-	n, ok := tp.FindPair(ctx, pool)
-
-	if !ok {
-		return fmt.Errorf("not in list")
-	}
-	tp.PoolPairs = append(
-		tp.PoolPairs[:n],
-		tp.PoolPairs[n+1:]...,
-	)
-
-	return nil
-}
-
-func (tp *TradeProvider) GetPairs(
-	ctx c.Context, protocol SwapProtocol, tokens TokenPair,
-) (
-	[]TradePair,
-	bool,
-) {
-	var ok bool
-	pairs := make([]TradePair, 0)
-
-	for _, pair := range tp.PoolPairs {
-		if checkPairTokens(pair, tokens) &&
-			checkPairProtocol(pair, protocol) {
-
-			pairs = append(pairs, pair)
-
-			ok = true
-		}
-	}
-
-	return pairs, ok
-}
-
-func (tp *TradeProvider) SetPairs(
-	ctx c.Context, pairs []TradePair,
-) error {
-	for _, pair := range pairs {
-		err := tp.AddPair(ctx, pair)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (tp *TradeProvider) ListPairs(
 	ctx c.Context,
-) []TradePair {
-
-	return tp.PoolPairs
-}
-
-func (tp *TradeProvider) Clear() {
-	new := make([]TradePair, 0)
-	tp.PoolPairs = new
+	client ethClient,
+	tokens ...Token,
+) (
+	provider *TradeProvider,
+) {
+	provider = &TradeProvider{
+		Client: client,
+		Tokens: tokens,
+	}
 
 	return
 }
 
-func checkPairProtocol(
-	pair TradePair, protocol SwapProtocol,
-) bool {
-	if pair.Pool0.SwapProtocol == protocol &&
-		pair.Pool1.SwapProtocol == protocol {
-		return true
+func (tp *TradeProvider) AddToken(
+	ctx c.Context,
+	token Token,
+) (
+	err error,
+) {
+	index, ok := tp.containToken(token.Address)
+	if ok {
+		err = fmt.Errorf(
+			"token %v already added with index %v",
+			token,
+			index,
+		)
+		return
 	}
 
-	return false
+	tp.Tokens = append(
+		tp.Tokens,
+		token,
+	)
+
+	return
 }
 
-func checkPairTokens(
-	pair TradePair, tokens TokenPair,
-) bool {
-	if pair.Pool0.Pair == tokens &&
-		pair.Pool1.Pair == tokens {
-		return true
+func (tp *TradeProvider) GetToken(
+	ctx c.Context,
+	address string,
+) (
+	token Token,
+	err error,
+) {
+	index, ok := tp.containToken(address)
+	if !ok {
+		err = fmt.Errorf(
+			"no token with address %s",
+			address,
+		)
+		return
+	}
+	token = tp.Tokens[index]
+
+	return
+}
+
+func (tp *TradeProvider) RemoveToken(
+	ctx c.Context,
+	token Token,
+) (
+	err error,
+) {
+	index, ok := tp.containToken(token.Address)
+	if !ok {
+		err = fmt.Errorf(
+			"no token %v",
+			token,
+		)
+		return
 	}
 
-	return false
+	tp.Tokens = append(
+		tp.Tokens[:index],
+		tp.Tokens[index+1:]...,
+	)
+
+	return
+}
+
+func (tp *TradeProvider) SetTokens(
+	ctx c.Context,
+	tokens []Token,
+) (
+	err error,
+) {
+	for _, token := range tokens {
+		err = tp.AddToken(
+			ctx,
+			token,
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (tp *TradeProvider) ListTokens(
+	ctx c.Context,
+) (
+	tokens []Token,
+) {
+	tokens = tp.Tokens
+
+	return
+}
+
+func (tp *TradeProvider) Clear() {
+	new := make(
+		[]Token,
+		0,
+	)
+	tp.Tokens = new
+
+	return
+}
+
+func (tp *TradeProvider) containToken(
+	address string,
+) (
+	index int,
+	ok bool,
+) {
+	ok = false
+
+	for n, t := range tp.Tokens {
+		if t.Address == address {
+			index = n
+			ok = true
+
+			return
+		}
+	}
+	return
 }

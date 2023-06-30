@@ -3,7 +3,7 @@ package contract
 import (
 	"context"
 	c "context"
-	"log"
+	"fmt"
 	"math/big"
 
 	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
@@ -14,101 +14,98 @@ import (
 )
 
 type contractApi interface {
-	AddBaseToken(*b.TransactOpts, cm.Address) (
-		*t.Transaction,
-		error,
-	)
-	BaseTokensContains(*b.CallOpts, cm.Address) (
-		bool,
-		error,
-	)
-	GetBaseTokens(*b.CallOpts) (
-		[]cm.Address,
-		error,
-	)
-	RemoveBaseToken(*b.TransactOpts, cm.Address) (
-		*t.Transaction,
-		error,
-	)
-	GetProfit(*b.CallOpts, cm.Address, cm.Address) (
-		struct {
-			Profit    *big.Int
-			BaseToken cm.Address
-		},
-		error,
-	)
-	Withdraw(*b.TransactOpts) (
-		*t.Transaction,
-		error,
-	)
-	FlashArbitrage(*b.TransactOpts, cm.Address, cm.Address) (
-		*t.Transaction,
-		error,
-	)
+	AddBaseToken(
+		*b.TransactOpts, cm.Address,
+	) (*t.Transaction, error)
+
+	BaseTokensContains(
+		*b.CallOpts, cm.Address,
+	) (bool, error)
+
+	GetBaseTokens(
+		*b.CallOpts,
+	) ([]cm.Address, error)
+
+	RemoveBaseToken(
+		*b.TransactOpts, cm.Address,
+	) (*t.Transaction, error)
+
+	GetProfit(
+		*b.CallOpts, cm.Address, cm.Address,
+	) (struct {
+		Profit    *big.Int
+		BaseToken cm.Address
+	}, error)
+
+	Withdraw(
+		*b.TransactOpts,
+	) (*t.Transaction, error)
+
+	FlashArbitrage(
+		*b.TransactOpts, cm.Address, cm.Address,
+	) (*t.Transaction, error)
 }
 
 type FlashArbContract struct {
-	Address cm.Address
-	api     contractApi
-	tokens  map[string]Token
+	Address    cm.Address
+	api        contractApi
+	tradePairs []TradePair
 }
 
 func NewContract(
-	address cm.Address, api contractApi, tokens []Token,
-) *FlashArbContract {
-	tokenMap := make(map[string]Token)
-
-	for _, token := range tokens {
-		tokenMap[token.Address] = token
+	address cm.Address,
+	api contractApi,
+	pairs []TradePair,
+) (
+	contract *FlashArbContract,
+) {
+	contract = &FlashArbContract{
+		Address:    address,
+		api:        api,
+		tradePairs: pairs,
 	}
 
-	return &FlashArbContract{
-		Address: address,
-		api:     api,
-		tokens:  tokenMap,
-	}
+	return
 }
 
-func (fac *FlashArbContract) AddBaseToken(
-	ctx c.Context, token Token,
+func (fc *FlashArbContract) AddBaseToken(
+	ctx c.Context,
+	token Token,
 ) (
-	interface{},
-	error,
+	out interface{},
+	err error,
 ) {
-	fac.Add(token)
-
-	return fac.api.AddBaseToken(
+	out, err = fc.api.AddBaseToken(
 		&b.TransactOpts{Context: ctx},
 		cm.HexToAddress(token.Address),
 	)
+
+	return
 }
 
-func (fac *FlashArbContract) BaseTokensContains(
-	ctx c.Context, token Token,
+func (fc *FlashArbContract) BaseTokensContains(
+	ctx c.Context,
+	token Token,
 ) (
-	bool,
-	error,
+	ok bool,
+	err error,
 ) {
-	ok, err := fac.api.BaseTokensContains(
+	ok, err = fc.api.BaseTokensContains(
 		&b.CallOpts{Context: ctx},
 		cm.HexToAddress(token.Address),
 	)
-	if ok {
-		fac.Add(token)
-	}
 
-	return ok, err
+	return
 }
 
-func (fac *FlashArbContract) RemoveBaseToken(
-	ctx c.Context, token Token,
+func (fc *FlashArbContract) RemoveBaseToken(
+	ctx c.Context,
+	token Token,
 ) (
-	interface{},
-	error,
+	out interface{},
+	err error,
 ) {
-	fac.Remove(token)
-
-	return fac.api.RemoveBaseToken(
+	out, err = fc.api.RemoveBaseToken(
 		&b.TransactOpts{
 			Context: ctx,
 		},
@@ -116,106 +113,227 @@ func (fac *FlashArbContract) RemoveBaseToken(
 			token.Address,
 		),
 	)
+
+	return
 }
 
-func (fac *FlashArbContract) GetBaseTokens(
+func (fc *FlashArbContract) GetBaseTokens(
 	ctx c.Context,
 ) (
-	[]Token,
-	error,
+	baseAddr []string,
+	err error,
 ) {
-	outTokens := make([]Token, 0)
-
-	out, err := fac.api.GetBaseTokens(
+	out, err := fc.api.GetBaseTokens(
 		&b.CallOpts{Context: ctx},
 	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	for _, addr := range out {
-		t, ok := fac.tokens[addr.String()]
-		if !ok {
-			log.Printf(
-				"unknown %s token",
-				addr.String(),
-			)
-			fac.tokens[addr.String()] = Token{}
-		}
-		outTokens = append(outTokens, t)
+		baseAddr = append(baseAddr, addr.Hex())
 	}
 
-	return outTokens, nil
+	return
 }
 
-func (fac *FlashArbContract) GetProfit(
-	ctx context.Context, pair TradePair,
+func (fc *FlashArbContract) GetProfit(
+	ctx context.Context,
+	pair TradePair,
 ) (
-	int,
-	error,
+	profit int,
+	err error,
 ) {
-	prof, err := fac.api.GetProfit(
+	p, err := fc.api.GetProfit(
 		&b.CallOpts{Context: ctx},
 		cm.HexToAddress(pair.Pool0.Address),
 		cm.HexToAddress(pair.Pool1.Address),
 	)
 	if err != nil {
-		return 0, err
-	}
-
-	return convertProfit(prof.Profit, fac.tokens[prof.BaseToken.Hex()]), nil
-}
-
-func (fac *FlashArbContract) Add(
-	token Token,
-) {
-	t, ok := fac.tokens[token.Address]
-	if (!ok || t == Token{}) {
-		fac.tokens[token.Address] = token
-
 		return
 	}
-}
 
-func (fac *FlashArbContract) Remove(
-	token Token,
-) {
-	if _, ok := fac.tokens[token.Address]; ok {
-		delete(fac.tokens, token.Address)
-
-		return
-	}
-}
-
-func (fac *FlashArbContract) Get(
-	addr string,
-) (Token,
-	bool,
-) {
-	token, ok := fac.tokens[addr]
-	return token, ok
-}
-
-func (fac *FlashArbContract) Tokens() map[string]Token {
-	return fac.tokens
-}
-
-func (fac *FlashArbContract) List() []Token {
-	vals := make([]Token, 0)
-	for _, v := range fac.tokens {
-		vals = append(vals, v)
-	}
-	return vals
-}
-
-func (fac *FlashArbContract) Clear() {
-	new := make(map[string]Token, 0)
-	fac.tokens = new
+	profit = int(p.Profit.Int64())
 
 	return
 }
 
-func convertProfit(num *big.Int, curr Token) int {
-	res := int(num.Int64())
-	return res
+func (fc *FlashArbContract) AddPair(
+	ctx context.Context,
+	pair TradePair,
+) (
+	err error,
+) {
+	index, ok := fc.containPair(
+		pair.Pool0.Address,
+		pair.Pool1.Address,
+	)
+	if ok {
+		err = fmt.Errorf(
+			"already added with index %v",
+			index,
+		)
+		return
+	}
+
+	return
+}
+
+func (fc *FlashArbContract) RemovePair(
+	ctx context.Context,
+	pool0, pool1 string,
+) (
+	err error,
+) {
+	index, ok := fc.containPair(pool0, pool1)
+	if !ok {
+		err = fmt.Errorf(
+			"pair not found",
+		)
+		return
+	}
+	fc.tradePairs = append(
+		fc.tradePairs[:index],
+		fc.tradePairs[index+1:]...,
+	)
+
+	return
+}
+
+func (fc *FlashArbContract) GetPair(
+	ctx context.Context,
+	pool0, pool1 string,
+) (
+	pair TradePair,
+	err error,
+) {
+
+	index, ok := fc.containPair(pool0, pool1)
+	if !ok {
+		err = fmt.Errorf(
+			"pair not found",
+		)
+		return
+	}
+	pair = fc.tradePairs[index]
+
+	return
+}
+
+func (fc *FlashArbContract) ListPairs(
+	ctx context.Context,
+) (
+	vals []TradePair,
+) {
+	for _, v := range fc.tradePairs {
+		vals = append(vals, v)
+	}
+
+	return
+}
+
+func (fc *FlashArbContract) ClearPairs(
+	ctx context.Context,
+) {
+	new := make([]TradePair, 0)
+	fc.tradePairs = new
+
+	return
+}
+
+func (fc *FlashArbContract) SetPairs(
+	ctx context.Context,
+	pairs []TradePair,
+) (
+	err error,
+) {
+	for _, pair := range pairs {
+		err = fc.AddPair(ctx, pair)
+
+		return
+	}
+
+	return
+}
+
+func (fc *FlashArbContract) GetPairs(
+	ctx c.Context,
+	protocol SwapProtocol,
+	tokens TokenPair,
+) (
+	pairs []TradePair,
+	ok bool,
+) {
+	for _, pair := range fc.tradePairs {
+		if checkPairTokens(
+			pair,
+			tokens,
+		) && checkPairProtocol(
+			pair,
+			protocol,
+		) {
+			pairs = append(
+				pairs,
+				pair,
+			)
+			ok = true
+		}
+	}
+
+	return
+}
+
+func (fc *FlashArbContract) containPair(
+	pool0, pool1 string,
+) (
+	index int,
+	ok bool,
+) {
+	ok = false
+
+	for n, pair := range fc.tradePairs {
+		if (pair.Pool0.Address == pool0 &&
+			pair.Pool1.Address == pool1) ||
+			(pair.Pool0.Address == pool1 &&
+				pair.Pool1.Address == pool0) {
+			index = n
+			ok = true
+
+			return
+		}
+	}
+
+	return
+}
+
+func checkPairProtocol(
+	pair TradePair,
+	protocol SwapProtocol,
+) (
+	ok bool,
+) {
+	ok = false
+
+	if pair.Pool0.Protocol == protocol &&
+		pair.Pool1.Protocol == protocol {
+		ok = true
+	}
+
+	return
+}
+
+func checkPairTokens(
+	pair TradePair,
+	tokens TokenPair,
+) (
+	ok bool,
+) {
+	ok = false
+
+	if pair.Pool0.Pair == tokens &&
+		pair.Pool1.Pair == tokens {
+		ok = true
+	}
+
+	return
 }

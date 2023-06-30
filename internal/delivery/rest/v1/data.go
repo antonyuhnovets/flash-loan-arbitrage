@@ -13,13 +13,18 @@ type listPairs struct {
 
 // @Description Request list of trading pools
 type listPools struct {
-	Pools []entities.TradePool `json:"pools" bson:"pools"` // list of trade pools
+	Pools []entities.TradePool `json:"pools"` // list of trade pools
 } //@name ListPools
 
 // @Description Request list of tokens
 type listTokens struct {
 	Tokens []entities.Token `json:"tokens" bson:"tokens"` // list of tokens
 } //@name TokenList
+
+// @Description Map of Token pairs with their pools
+type tradeMap struct {
+	PairsPools map[entities.TokenPair][]entities.TradePool
+} // @name TradeMap
 
 // @Description Request for searching trade pair
 type tokenPair struct {
