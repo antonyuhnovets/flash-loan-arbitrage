@@ -92,6 +92,12 @@ func (pu *ParserUniV2) RemovePool(
 	return
 }
 
+func (ps *ParserUniV2) Clear() {
+	ps.Pools = make([]TradePool, 0)
+
+	return
+}
+
 func (pu *ParserUniV2) GetPairPools(
 	pair TokenPair,
 ) (

@@ -84,8 +84,8 @@ func Run(conf *config.Config) {
 		},
 	}
 
-	tc.GetRepo().AddToken(ctx, "tokens", tokenPair.Token0)
-	tc.GetRepo().AddToken(ctx, "tokens", tokenPair.Token1)
+	tc.Repo.AddToken(ctx, "tokens", tokenPair.Token0)
+	tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
 
 	err = tc.SetTokens(ctx, "tokens")
 
@@ -120,15 +120,20 @@ func Run(conf *config.Config) {
 			SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
 		},
 	)
-	tc.SetParser(&parseUniV3)
-	tc.ParseWrite(ctx, "pools", pairList)
+
+	p := make(map[string]tradecase.Parser)
+	p["uniswap-v3"] = &parseUniV3
+	pc := tradecase.NewParseCase(
+		repository,
+		p,
+	)
 
 	// logger
 	l := logger.New(conf.Log.Level)
 
 	// http server
 	handler := gin.New()
-	v1.NewRouter(handler, l, *tc)
+	v1.NewRouter(handler, l, *tc, pc)
 	httpServer := httpserver.New(
 		handler,
 		httpserver.Port(conf.HttpServer.Port),

@@ -142,4 +142,6 @@ type Parser interface {
 	)
 
 	ListPools() []TradePool
+
+	Clear()
 }

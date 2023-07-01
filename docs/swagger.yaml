@@ -99,15 +99,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get list of pairs
-      operationId: getPairs
-      parameters:
-      - description: Get pairs
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/RequestPairs'
+      description: Get full list of pairs
+      operationId: listPairs
       produces:
       - application/json
       responses:
@@ -123,7 +116,7 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/ErrorResponse'
-      summary: Get Pairs
+      summary: List Pairs
       tags:
       - Contract
     post:
@@ -152,12 +145,19 @@ paths:
       summary: Add Pairs
       tags:
       - Contract
-  /contract/pairs/list:
-    get:
+  /contract/pairs/find:
+    post:
       consumes:
       - application/json
-      description: Get full list of pairs
-      operationId: listPairs
+      description: Get list of pairs by protocol, tokens
+      operationId: getPairs
+      parameters:
+      - description: Get pairs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/RequestPairs'
       produces:
       - application/json
       responses:
@@ -173,7 +173,7 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/ErrorResponse'
-      summary: List Pairs
+      summary: Get Pairs
       tags:
       - Contract
   /contract/tokens/base:
@@ -305,10 +305,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/ErrorResponse'
         "507":
           description: Insufficient Storage
           schema:
@@ -349,8 +345,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TokenList'
-        "507":
-          description: Insufficient Storage
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Tokens

@@ -175,7 +175,8 @@ func (fc *FlashArbContract) AddPair(
 		)
 		return
 	}
-
+	fc.tradePairs = append(fc.tradePairs, pair)
+	fmt.Print(fc.tradePairs)
 	return
 }
 
@@ -228,6 +229,7 @@ func (fc *FlashArbContract) ListPairs(
 	for _, v := range fc.tradePairs {
 		vals = append(vals, v)
 	}
+	fmt.Println(vals)
 
 	return
 }
@@ -248,6 +250,13 @@ func (fc *FlashArbContract) SetPairs(
 	err error,
 ) {
 	for _, pair := range pairs {
+		_, ok := fc.containPair(
+			pair.Pool0.Address,
+			pair.Pool1.Address,
+		)
+		if ok {
+			continue
+		}
 		err = fc.AddPair(ctx, pair)
 
 		return

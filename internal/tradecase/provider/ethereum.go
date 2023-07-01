@@ -106,13 +106,11 @@ func (tp *TradeProvider) SetTokens(
 	err error,
 ) {
 	for _, token := range tokens {
-		err = tp.AddToken(
-			ctx,
-			token,
-		)
-		if err != nil {
-			return
+		_, ok := tp.containToken(token.Address)
+		if ok {
+			continue
 		}
+		err = tp.AddToken(ctx, token)
 	}
 
 	return

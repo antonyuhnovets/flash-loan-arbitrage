@@ -8,10 +8,9 @@ import (
 )
 
 type TradeCase struct {
-	repo     TradeRepo
-	provider TradeProvider
-	contract SmartContract
-	parser   Parser
+	Repo     TradeRepo
+	Provider TradeProvider
+	Contract SmartContract
 }
 
 func New(
@@ -22,64 +21,34 @@ func New(
 	tc *TradeCase,
 ) {
 	tc = &TradeCase{
-		repo:     r,
-		provider: p,
-		contract: c,
+		Repo:     r,
+		Provider: p,
+		Contract: c,
 	}
 
 	return
 }
 
-func (tc *TradeCase) SetParser(
-	p Parser,
-) {
-	tc.parser = p
-}
-
-func (tc *TradeCase) GetParser() (
-	parser Parser,
-) {
-	parser = tc.parser
-
-	return
-}
-
-func (tc *TradeCase) GetContract() (
+func (tc *TradeCase) SetContract() (
 	contract SmartContract,
 ) {
-	contract = tc.contract
+	tc.Contract = contract
 
 	return
 }
 
-func (tc *TradeCase) GetProvider() (
+func (tc *TradeCase) SetProvider() (
 	provider TradeProvider,
 ) {
-	provider = tc.provider
+	tc.Provider = provider
 
 	return
 }
 
-func (tc *TradeCase) GetRepo() (
+func (tc *TradeCase) SetRepo() (
 	repo TradeRepo,
 ) {
-	repo = tc.repo
-
-	return
-}
-
-func (tc *TradeCase) ParseWrite(
-	ctx context.Context,
-	where string,
-	pairs []TokenPair,
-) (
-	err error,
-) {
-	tc.parser.Parse(pairs)
-
-	pools := tc.parser.ListPools()
-
-	tc.repo.StorePools(ctx, where, pools)
+	tc.Repo = repo
 
 	return
 }
@@ -90,11 +59,11 @@ func (tc *TradeCase) SetTokens(
 ) (
 	err error,
 ) {
-	tokens, err := tc.repo.ListTokens(ctx, where)
+	tokens, err := tc.Repo.ListTokens(ctx, where)
 	if err != nil {
 		return
 	}
-	err = tc.provider.SetTokens(ctx, tokens)
+	err = tc.Provider.SetTokens(ctx, tokens)
 
 	return
 }
@@ -104,7 +73,7 @@ func (tc *TradeCase) SetProfitablePairs(
 ) (
 	err error,
 ) {
-	pools, err := tc.repo.ListPools(
+	pools, err := tc.Repo.ListPools(
 		ctx,
 		where,
 	)
@@ -134,7 +103,7 @@ func (tc *TradeCase) SetProfitablePairs(
 		return
 	}
 
-	err = tc.contract.SetPairs(
+	err = tc.Contract.SetPairs(
 		ctx,
 		prof,
 	)
@@ -153,7 +122,7 @@ func (tc *TradeCase) GetProfitable(
 	err error,
 ) {
 	for _, pair := range pairs {
-		p, _err := tc.contract.GetProfit(
+		p, _err := tc.Contract.GetProfit(
 			ctx,
 			pair,
 		)

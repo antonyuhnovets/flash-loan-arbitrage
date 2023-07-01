@@ -133,6 +133,12 @@ func (pu *ParserUniV3) ListPools() (
 	return
 }
 
+func (ps *ParserUniV3) Clear() {
+	ps.Pools = make([]TradePool, 0)
+
+	return
+}
+
 func (pu *ParserUniV3) containPool(
 	pool TradePool,
 ) (

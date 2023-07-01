@@ -26,6 +26,7 @@ func NewRouter(
 	h *gin.Engine,
 	l logger.Interface,
 	t tradecase.TradeCase,
+	p tradecase.ParseCase,
 ) {
 	// Options
 	h.Use(gin.Logger())
@@ -62,5 +63,6 @@ func NewRouter(
 	handler := h.Group("/v1")
 	{
 		NewTradecaseRouter(handler, t, l)
+		NewParsecaseRouter(handler, p, l)
 	}
 }

@@ -125,6 +125,12 @@ func (ps *ParserSushiV2) AddPools(
 	return
 }
 
+func (ps *ParserSushiV2) Clear() {
+	ps.Pools = make([]TradePool, 0)
+
+	return
+}
+
 func (ps *ParserSushiV2) ListPools() (
 	listPools []TradePool,
 ) {

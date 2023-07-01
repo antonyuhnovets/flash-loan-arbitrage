@@ -21,7 +21,7 @@ const docTemplate = `{
     "paths": {
         "/contract/pairs": {
             "get": {
-                "description": "Get list of pairs",
+                "description": "Get full list of pairs",
                 "consumes": [
                     "application/json"
                 ],
@@ -31,19 +31,8 @@ const docTemplate = `{
                 "tags": [
                     "Contract"
                 ],
-                "summary": "Get Pairs",
-                "operationId": "getPairs",
-                "parameters": [
-                    {
-                        "description": "Get pairs",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/RequestPairs"
-                        }
-                    }
-                ],
+                "summary": "List Pairs",
+                "operationId": "listPairs",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -105,9 +94,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/contract/pairs/list": {
-            "get": {
-                "description": "Get full list of pairs",
+        "/contract/pairs/find": {
+            "post": {
+                "description": "Get list of pairs by protocol, tokens",
                 "consumes": [
                     "application/json"
                 ],
@@ -117,8 +106,19 @@ const docTemplate = `{
                 "tags": [
                     "Contract"
                 ],
-                "summary": "List Pairs",
-                "operationId": "listPairs",
+                "summary": "Get Pairs",
+                "operationId": "getPairs",
+                "parameters": [
+                    {
+                        "description": "Get pairs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/RequestPairs"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -336,12 +336,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
                     "507": {
                         "description": "Insufficient Storage",
                         "schema": {
@@ -402,8 +396,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/TokenList"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
