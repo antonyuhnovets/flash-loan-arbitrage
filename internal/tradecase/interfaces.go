@@ -6,7 +6,7 @@ import (
 	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 )
 
-type TradeRepo interface {
+type Repository interface {
 	Store(
 		c.Context, string, []byte,
 	) error
@@ -49,6 +49,10 @@ type TradeRepo interface {
 
 	Clear(
 		c.Context, string,
+	) error
+
+	ClearAll(
+		c.Context,
 	) error
 }
 

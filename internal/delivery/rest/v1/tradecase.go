@@ -65,6 +65,7 @@ func (tr *tradecaseRoutes) GetPairs(
 		return
 	}
 	lst.Pairs = pairs
+
 	respondOk(c, lst)
 
 	return

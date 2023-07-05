@@ -8,13 +8,13 @@ import (
 )
 
 type TradeCase struct {
-	Repo     TradeRepo
+	Repo     Repository
 	Provider TradeProvider
 	Contract SmartContract
 }
 
 func New(
-	r TradeRepo,
+	r Repository,
 	p TradeProvider,
 	c SmartContract,
 ) (
@@ -46,7 +46,7 @@ func (tc *TradeCase) SetProvider() (
 }
 
 func (tc *TradeCase) SetRepo() (
-	repo TradeRepo,
+	repo Repository,
 ) {
 	tc.Repo = repo
 

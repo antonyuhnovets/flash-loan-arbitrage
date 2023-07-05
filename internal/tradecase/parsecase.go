@@ -10,12 +10,12 @@ import (
 
 type ParseCase struct {
 	Parsers map[string]Parser
-	Repo    TradeRepo
+	Repo    Repository
 	Pools   []entities.TradePool
 }
 
 func NewParseCase(
-	repo TradeRepo,
+	repo Repository,
 	parsers map[string]Parser,
 ) (
 	pc ParseCase,

@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"encoding/json"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
@@ -45,24 +43,24 @@ func (pr *parsecaseRoutes) ReadParsed(
 
 }
 
-// @Summary     Get Pools
-// @Description Get list of pools
-// @ID          getPools
+// @Summary     Get Tokens
+// @Description Get list of all tokens from storage
+// @ID          getTokensList
 // @Tags  	    Storage
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} listPools
+// @Success     200 {object} listTokens
 // @Failure     409 {object} responseErr
 // @Failure     507 {object} responseErr
-// @Router      /storage/pools [get]
-func (pr *parsecaseRoutes) GetPools(
+// @Router      /storage/tokens [get]
+func (pr *parsecaseRoutes) ListTokens(
 	c *gin.Context,
 ) {
-	res := listPools{
-		Pools: make([]entities.TradePool, 0),
+	res := listTokens{
+		Tokens: make([]entities.Token, 0),
 	}
 
-	out, err := pr.pc.Repo.Read(c, "pools")
+	out, err := pr.pc.Repo.ListTokens(c, "tokens")
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -75,9 +73,34 @@ func (pr *parsecaseRoutes) GetPools(
 		return
 	}
 
-	err = json.Unmarshal(out, &res.Pools)
+	res.Tokens = out
+
+	respondOk(c, res)
+
+	return
+}
+
+// @Summary     Add Tokens
+// @Description Add list of tokens to storage
+// @ID          addTokens
+// @Tags  	    Storage
+// @Accept      json
+// @Produce     json
+// @Param       request body listTokens true "Add pools"
+// @Success     201 {object} listTokens
+// @Failure     400 {object} responseErr
+// @Failure     507 {object} responseErr
+// @Router      /storage/tokens [post]
+func (pr *parsecaseRoutes) AddTokens(
+	c *gin.Context,
+) {
+	tokens := &listTokens{
+		Tokens: make([]entities.Token, 0),
+	}
+
+	err := c.BindJSON(tokens)
 	if err != nil {
-		errorConflict(
+		errorBadRequest(
 			c, err.Error(),
 			Log(
 				pr.l.Error,
@@ -87,13 +110,62 @@ func (pr *parsecaseRoutes) GetPools(
 		)
 		return
 	}
+
+	err = pr.pc.Repo.StoreTokens(c, "tokens", tokens.Tokens)
+	if err != nil {
+		errorInufficientStorage(
+			c, err.Error(),
+			Log(
+				pr.l.Error,
+				err,
+				"rest - v1 - Store",
+			),
+		)
+		return
+	}
+	respondCreated(c, tokens)
+
+	return
+}
+
+// @Summary     Get Pools
+// @Description Get list of all pools from storage
+// @ID          getPoolList
+// @Tags  	    Storage
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPools
+// @Failure     409 {object} responseErr
+// @Failure     507 {object} responseErr
+// @Router      /storage/pools [get]
+func (pr *parsecaseRoutes) ListPools(
+	c *gin.Context,
+) {
+	res := listPools{
+		Pools: make([]entities.TradePool, 0),
+	}
+
+	out, err := pr.pc.Repo.ListPools(c, "pools")
+	if err != nil {
+		errorInufficientStorage(
+			c, err.Error(),
+			Log(
+				pr.l.Error,
+				err,
+				"rest - v1 - GetPools",
+			),
+		)
+		return
+	}
+	res.Pools = out
+
 	respondOk(c, res)
 
 	return
 }
 
 // @Summary     Add Pools
-// @Description Add list of pools
+// @Description Add list of pools to storage
 // @ID          addPools
 // @Tags  	    Storage
 // @Accept      json
@@ -171,8 +243,16 @@ func NewStorageRouter(
 	handler := h.Group("storage")
 	{
 		handler.GET(
+			"/tokens",
+			pr.ListTokens,
+		)
+		handler.POST(
+			"/tokens",
+			pr.AddTokens,
+		)
+		handler.GET(
 			"/pools",
-			pr.GetPools,
+			pr.ListPools,
 		)
 		handler.POST(
 			"/pools",

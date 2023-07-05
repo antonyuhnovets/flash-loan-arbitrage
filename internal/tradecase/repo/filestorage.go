@@ -24,19 +24,35 @@ func NewStorage() (
 	return
 }
 
+func (fs *FileStorage) Setup(
+	files map[string]string,
+) (
+	err error,
+) {
+	for k, v := range files {
+		err = fs.NewFile(k, v)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
 func (fs *FileStorage) UseFile(
 	name, path string,
 ) {
 	fs.files[name] = path
-	// fs.endObj(name, path)
 }
 
 func (fs *FileStorage) NewFile(
 	name, path string,
 ) (
+
 	err error,
 ) {
 	f, err := os.Create(path)
+
 	if err != nil {
 		return
 	}
@@ -102,9 +118,10 @@ func (fs *FileStorage) GetByTokens(
 	where string,
 	tokens TokenPair,
 ) (
-	res []TradePool,
+	pools []TradePool,
 	err error,
 ) {
+	var res []TradePool
 	out, err := fs.Read(
 		ctx,
 		where,
@@ -121,12 +138,11 @@ func (fs *FileStorage) GetByTokens(
 		return
 	}
 
-	for n, pool := range res {
+	for _, pool := range res {
 		if pool.Pair != tokens {
-			res = append(
-				res[:n],
-				res[n+1:]...,
-			)
+			continue
+		} else {
+			pools = append(pools, pool)
 		}
 	}
 
@@ -313,7 +329,7 @@ func (fs *FileStorage) GetTokenByAddress(
 	token Token,
 	err error,
 ) {
-	pools, err := fs.ListPools(
+	tokens, err := fs.ListTokens(
 		ctx,
 		where,
 	)
@@ -321,17 +337,33 @@ func (fs *FileStorage) GetTokenByAddress(
 		return
 	}
 
-	for _, pool := range pools {
-		token = *getTokenFromPair(
-			pool.Pair,
-			address,
-		)
-		if &token != nil {
+	for _, t := range tokens {
+		if t.Address == address {
+			token = t
 			return
-		} else {
-			continue
 		}
 	}
+
+	// pools, err := fs.ListPools(
+	// 	ctx,
+	// 	where,
+	// )
+	// if err != nil {
+	// 	return
+	// }
+
+	// for _, pool := range pools {
+	// 	t := getTokenFromPair(
+	// 		pool.Pair,
+	// 		address,
+	// 	)
+	// 	if t != nil {
+	// 		token = *t
+	// 		return
+	// 	} else {
+	// 		continue
+	// 	}
+	// }
 
 	err = fmt.Errorf(
 		"token with address %s not found\n",
@@ -351,6 +383,22 @@ func (fs *FileStorage) Clear(
 		fs.files[where],
 		0,
 	)
+
+	return
+}
+
+func (fs *FileStorage) ClearAll(
+	ctx c.Context,
+) (
+	err error,
+) {
+	for k, v := range fs.files {
+		err = os.Remove(v)
+		if err != nil {
+			return
+		}
+		fs.files[k] = ""
+	}
 
 	return
 }

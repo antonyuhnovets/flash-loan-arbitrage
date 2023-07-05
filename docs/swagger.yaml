@@ -262,8 +262,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get list of pools
-      operationId: getPools
+      description: Get list of all pools from storage
+      operationId: getPoolList
       produces:
       - application/json
       responses:
@@ -285,7 +285,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add list of pools
+      description: Add list of pools to storage
       operationId: addPools
       parameters:
       - description: Add pools
@@ -310,6 +310,60 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Pools
+      tags:
+      - Storage
+  /storage/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all tokens from storage
+      operationId: getTokensList
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get Tokens
+      tags:
+      - Storage
+    post:
+      consumes:
+      - application/json
+      description: Add list of tokens to storage
+      operationId: addTokens
+      parameters:
+      - description: Add pools
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TokenList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Tokens
       tags:
       - Storage
   /trade/pairs:

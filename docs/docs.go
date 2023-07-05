@@ -266,7 +266,7 @@ const docTemplate = `{
         },
         "/storage/pools": {
             "get": {
-                "description": "Get list of pools",
+                "description": "Get list of all pools from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -277,7 +277,7 @@ const docTemplate = `{
                     "Storage"
                 ],
                 "summary": "Get Pools",
-                "operationId": "getPools",
+                "operationId": "getPoolList",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -300,7 +300,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Add list of pools",
+                "description": "Add list of pools to storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -328,6 +328,87 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/storage/tokens": {
+            "get": {
+                "description": "Get list of all tokens from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get Tokens",
+                "operationId": "getTokensList",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add list of tokens to storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Add Tokens",
+                "operationId": "addTokens",
+                "parameters": [
+                    {
+                        "description": "Add pools",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
                         }
                     },
                     "400": {
