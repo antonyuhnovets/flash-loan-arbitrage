@@ -2,49 +2,35 @@ package tradecase
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 )
 
 type ParseCase struct {
-	Parsers map[string]Parser
-	Repo    Repository
-	Pools   []entities.TradePool
+	Parser
+	Repository
 }
 
 func NewParseCase(
 	repo Repository,
-	parsers map[string]Parser,
+	parse Parser,
 ) (
 	pc ParseCase,
 ) {
 	pc = ParseCase{
-		Parsers: parsers,
-		Repo:    repo,
-		Pools:   make([]entities.TradePool, 0),
+		parse, repo,
 	}
 
 	return
 }
 
-func (pc *ParseCase) SetProtocol(
+func (pc *ParseCase) SwitchProtocol(
 	ctx context.Context,
-	name string,
-	parser Parser,
+	sp entities.SwapProtocol,
 ) (
 	err error,
 ) {
-	p, ok := pc.Parsers[name]
-	if ok {
-		if p == parser {
-			err = fmt.Errorf("protocol already added")
-			return
-		}
-		log.Println("changing protocol parser")
-	}
-	pc.Parsers[name] = parser
+	pc.Parser.SetProtocol(sp)
 
 	return
 }
@@ -66,7 +52,8 @@ func (pc *ParseCase) ParseAndStore(
 	if err != nil {
 		return
 	}
-	err = pc.Repo.StorePools(ctx, "pools", pools)
+	err = pc.StorePools(ctx, "pools", pools)
+
 	return
 }
 
@@ -76,12 +63,9 @@ func (pc *ParseCase) ParsePairs(
 ) (
 	err error,
 ) {
-	for _, v := range pc.Parsers {
-		err = v.Parse(pairs)
-		if err != nil {
-			return
-		}
-	}
+
+	err = pc.Parser.Parse(pairs)
+
 	return
 
 }
@@ -92,14 +76,8 @@ func (pc *ParseCase) GetPools(
 	pools []entities.TradePool,
 	err error,
 ) {
-	for _, v := range pc.Parsers {
-		pools = append(pools, v.ListPools()...)
-	}
-	if pools == nil {
-		err = fmt.Errorf("Not found pools")
-		return
-	}
-	pc.Pools = pools
+	pools = pc.Parser.ListPools()
+	err = nil
 
 	return
 }
@@ -110,11 +88,10 @@ func (pc *ParseCase) GetPairs(
 	pairs []entities.TokenPair,
 	err error,
 ) {
-	tokens, err := pc.Repo.ListTokens(
+	tokens, err := pc.Repository.ListTokens(
 		ctx,
 		"tokens",
 	)
-	// fmt.Println(tokens)
 	if err != nil {
 		return
 	}
@@ -130,16 +107,20 @@ func (pc *ParseCase) GetPairs(
 		if _, ok := m[token]; !ok {
 			for _, t := range tokens {
 				if t != token {
+
 					m[token] = entities.TokenPair{
 						Token0: token,
 						Token1: t,
 					}
+
 					n[m[token]] = index
 				}
 			}
 		}
+
 		continue
 	}
+
 	for k := range n {
 		pairs = append(pairs, k)
 	}
@@ -150,35 +131,14 @@ func (pc *ParseCase) GetPairs(
 func (pc *ParseCase) Clear(
 	ctx context.Context,
 ) {
-	pc.Pools = make([]entities.TradePool, 0)
+	pc.Parser.Clear()
 }
 
-func (pc ParseCase) ClearAll(
-	ctx context.Context,
-) {
-	for _, v := range pc.Parsers {
-		v.Clear()
-	}
-	pc.Clear(ctx)
-}
-
-func pairContain(
-	pairs []entities.TokenPair,
-	searchEl entities.TokenPair,
-) (
-	index int,
-	ok bool,
-) {
-	ok = false
-
-	for n, pair := range pairs {
-		if pair == searchEl {
-			ok = true
-			index = n
-
-			return
-		}
-	}
-
-	return
-}
+// func (pc ParseCase) ClearAll(
+// 	ctx context.Context,
+// ) {
+// 	for _, v := range pc.Parsers {
+// 		v.Clear()
+// 	}
+// 	pc.Clear(ctx)
+// }

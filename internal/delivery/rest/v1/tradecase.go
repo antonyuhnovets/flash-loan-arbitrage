@@ -1,10 +1,15 @@
 package v1
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	tc "github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+
+	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	log "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
@@ -67,8 +72,6 @@ func (tr *tradecaseRoutes) GetPairs(
 	lst.Pairs = pairs
 
 	respondOk(c, lst)
-
-	return
 }
 
 // @Summary     List Pairs
@@ -92,8 +95,6 @@ func (tr *tradecaseRoutes) ListPairs(
 	pairLst.Pairs = append(pairLst.Pairs, pairs...)
 
 	respondOk(c, pairLst)
-
-	return
 }
 
 // @Summary     Add Pairs
@@ -138,9 +139,8 @@ func (tr *tradecaseRoutes) AddPairs(
 		)
 		return
 	}
-	respondCreated(c, req)
 
-	return
+	respondCreated(c, req)
 }
 
 // @Summary     Get Tokens
@@ -155,7 +155,9 @@ func (tr *tradecaseRoutes) AddPairs(
 func (tr *tradecaseRoutes) GetBaseTokens(
 	c *gin.Context,
 ) {
-	tokens, err := tr.t.Contract.GetBaseTokens(c)
+	tokens, err := tr.t.Contract.API().GetBaseTokens(
+		eth.CallOpts(),
+	)
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -167,9 +169,8 @@ func (tr *tradecaseRoutes) GetBaseTokens(
 		)
 		return
 	}
-	respondOk(c, tokens)
 
-	return
+	respondOk(c, tokens)
 }
 
 // @Summary     Add Tokens
@@ -213,9 +214,8 @@ func (tr *tradecaseRoutes) AddTokens(c *gin.Context) {
 		}
 
 	}
-	respondCreated(c, req)
 
-	return
+	respondCreated(c, req)
 }
 
 // @Summary     List Tokens
@@ -230,9 +230,8 @@ func (tr *tradecaseRoutes) ListTokens(
 	c *gin.Context,
 ) {
 	tokens := tr.t.Provider.ListTokens(c)
-	respondOk(c, tokens)
 
-	return
+	respondOk(c, tokens)
 }
 
 // @Summary     Load Tokens
@@ -254,14 +253,13 @@ func (tr *tradecaseRoutes) LoadTokens(
 			Log(
 				tr.l.Error,
 				err,
-				"rest - v1 - GetTokens",
+				"rest - v1 - LoadTokens",
 			),
 		)
 		return
 	}
-	respondOk(c, tr.t.Provider.ListTokens(c))
 
-	return
+	respondOk(c, tr.t.Provider.ListTokens(c))
 }
 
 // @Summary     Load Pairs
@@ -283,14 +281,123 @@ func (tr *tradecaseRoutes) LoadPairs(
 			Log(
 				tr.l.Error,
 				err,
-				"rest - v1 - GetTokens",
+				"rest - v1 - LoadPairs",
 			),
 		)
 		return
 	}
-	respondOk(c, tr.t.Contract.ListPairs(c))
 
-	return
+	respondOk(c, tr.t.Contract.ListPairs(c))
+}
+
+// @Summary     Withdraw
+// @Description Withdraw tokens from contract
+// @ID          withdraw
+// @Tags  	    Trade
+// @Accept      json
+// @Produce     json
+// @Success     202 {object} response
+// @Failure     507 {object} responseErr
+// @Router      /trade/withdraw [get]
+func (tr *tradecaseRoutes) Withdraw(
+	c *gin.Context,
+) {
+
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	tx, err := tr.t.Withdraw(ctx)
+	if err != nil {
+		errorInufficientStorage(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - Withdraw",
+			),
+		)
+	}
+
+	res := response{tx}
+
+	respondAccepted(c, res)
+}
+
+// @Summary     Add Base Token
+// @Description Add base token to contract
+// @ID          addBase
+// @Tags  	    Trade
+// @Accept      json
+// @Produce     json
+// @Param		token query string true "Add base token"
+// @Success     201 {object} response
+// @Failure     507 {object} responseErr
+// @Router      /trade/token [post]
+func (tr *tradecaseRoutes) AddBase(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	addr := c.Query("token")
+
+	tx, err := tr.t.AddBaseToken(
+		ctx,
+		addr,
+	)
+	if err != nil {
+		errorConflict(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - AddBase",
+			),
+		)
+	}
+
+	res := response{tx}
+
+	respondCreated(c, res)
+}
+
+// @Summary     Remove Base Token
+// @Description Remove base token from contract
+// @ID          rmBase
+// @Tags  	    Trade
+// @Accept      json
+// @Produce     json
+// @Param		token query string false "Remove base token"
+// @Success     202 {object} response
+// @Failure     507 {object} responseErr
+// @Router      /trade/token [delete]
+func (tr *tradecaseRoutes) RmBase(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	addr := c.Query("token")
+
+	fmt.Println(addr)
+
+	tx, err := tr.t.RmBaseToken(
+		ctx,
+		addr,
+	)
+	if err != nil {
+		errorConflict(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - RmBase",
+			),
+		)
+	}
+	res := response{tx}
+
+	respondAccepted(c, res)
 }
 
 func NewTradecaseRouter(
@@ -360,6 +467,18 @@ func NewTradeRouter(
 		handler.GET(
 			"/pairs",
 			tr.LoadPairs,
+		)
+		handler.GET(
+			"/withdraw",
+			tr.Withdraw,
+		)
+		handler.POST(
+			"/token",
+			tr.AddBase,
+		)
+		handler.DELETE(
+			"/token",
+			tr.RmBase,
 		)
 	}
 }

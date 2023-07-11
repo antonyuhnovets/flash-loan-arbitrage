@@ -10,20 +10,20 @@ import (
 )
 
 var basePath, _ = os.Getwd()
-var testStorageLocal = &FileStorage{
-	files: map[string]string{
+var testStorageLocal, _ = NewStorage(
+	map[string]string{
 		"pools":  string(basePath[:len(basePath)-23]) + "/storage_test/pools_test.json",
 		"tokens": string(basePath[:len(basePath)-23]) + "/storage_test/tokens_test.json",
 	},
-}
+)
 
 var testStorages = []t.Repository{testStorageLocal}
 
 func TestStorageSetup(t *testing.T) {
-	for k, v := range testStorageLocal.files {
+	for k, v := range testStorageLocal.fst.Files {
 		_, err := os.Stat(v)
 		if err != nil {
-			err = testStorageLocal.NewFile(k, v)
+			err = testStorageLocal.fst.NewFile(k, v)
 			if err != nil {
 				t.Errorf(
 					"recieved %s output on local setupStorageTest with index %v",
@@ -31,7 +31,7 @@ func TestStorageSetup(t *testing.T) {
 				)
 			}
 		} else {
-			testStorageLocal.UseFile(k, v)
+			testStorageLocal.fst.UseFile(k, v)
 			continue
 		}
 	}
@@ -94,7 +94,7 @@ func TestStoreOne(t *testing.T) {
 					)
 				}
 			default:
-				err := s.Store(ctx, el.where, el.unit.([]byte))
+				err := s.GetStorage().Store(ctx, el.where, el.unit.([]byte))
 				if err == el.expected {
 					continue
 				} else {
@@ -175,7 +175,7 @@ func TestStoreMany(t *testing.T) {
 					)
 				}
 			default:
-				err := s.Store(ctx, el.where, el.unit.([]byte))
+				err := s.GetStorage().Store(ctx, el.where, el.unit.([]byte))
 				if err == el.expected {
 					continue
 				} else {
@@ -290,7 +290,7 @@ func TestGetAll(t *testing.T) {
 					)
 				}
 			default:
-				lst, err := s.Read(ctx, el.where)
+				lst, err := s.GetStorage().Read(ctx, el.where)
 				if &lst == el.expected || err == el.expected {
 					continue
 				} else {
@@ -308,7 +308,7 @@ func TestClean(t *testing.T) {
 	ctx := context.Background()
 
 	for index, storage := range testStorages {
-		err := storage.ClearAll(ctx)
+		err := storage.GetStorage().ClearAll(ctx)
 		if err != nil {
 			t.Errorf(
 				"error %s catched while cleaning storage %v",
@@ -353,14 +353,14 @@ func TestRepo(t *testing.T) {
 	}
 }
 
-func _sameLists(list1, list2 []interface{}) bool {
-	for index, el := range list1 {
-		if list2[index] == el {
-			continue
-		} else {
-			return false
-		}
-	}
-	return true
+// func _sameLists(list1, list2 []interface{}) bool {
+// 	for index, el := range list1 {
+// 		if list2[index] == el {
+// 			continue
+// 		} else {
+// 			return false
+// 		}
+// 	}
+// 	return true
 
-}
+// }

@@ -3,31 +3,93 @@ package provider
 import (
 	c "context"
 	"fmt"
-	"math/big"
 
 	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+
+	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 )
 
-type ethClient interface {
-	GetChainID() *big.Int
-}
-
 type TradeProvider struct {
-	Client ethClient
-	Tokens []Token `json:"tokens"`
+	Client  *eth.Client
+	Wallets []*eth.Wallet
+	Tokens  []Token `json:"tokens"`
 }
 
 func NewTradeProvider(
 	ctx c.Context,
-	client ethClient,
+	url, pk string,
 	tokens ...Token,
 ) (
 	provider *TradeProvider,
+	err error,
 ) {
-	provider = &TradeProvider{
-		Client: client,
-		Tokens: tokens,
+	cl, err := eth.NewClient(url)
+	if err != nil {
+		return
 	}
+
+	wall := eth.NewWallet()
+	err = wall.Setup(pk)
+	if err != nil {
+		return
+	}
+
+	err = cl.Setup(ctx, wall)
+	if err != nil {
+		return
+	}
+
+	provider = &TradeProvider{
+		Client:  cl,
+		Wallets: []*eth.Wallet{wall},
+		Tokens:  tokens,
+	}
+
+	return
+}
+
+func (tp *TradeProvider) GetClient(ctx c.Context) (
+	cl interface{},
+) {
+	cl = tp.Client
+
+	return
+}
+
+func (tp *TradeProvider) Ballance(ctx c.Context) (
+	ball int,
+	err error,
+) {
+	ball, err = tp.Client.GetBallance(ctx)
+
+	return
+}
+
+func (tp *TradeProvider) SwitchWallet(addr string) (
+	err error,
+) {
+	for _, wall := range tp.Wallets {
+		if wall.Address.String() == addr {
+			tp.Client.UseWallet(wall)
+
+			return
+		}
+	}
+	err = fmt.Errorf("no wallet with address %s", addr)
+
+	return
+}
+
+func (tp *TradeProvider) AddWallet(pk string) (
+	err error,
+) {
+	wall := eth.NewWallet()
+	err = wall.Setup(pk)
+	if err != nil {
+		return
+	}
+
+	tp.Wallets = append(tp.Wallets, wall)
 
 	return
 }
@@ -132,8 +194,6 @@ func (tp *TradeProvider) Clear() {
 		0,
 	)
 	tp.Tokens = new
-
-	return
 }
 
 func (tp *TradeProvider) containToken(

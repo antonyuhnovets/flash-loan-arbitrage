@@ -3,10 +3,55 @@ package tradecase
 import (
 	c "context"
 
-	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
 )
 
 type Repository interface {
+	PoolRepo
+
+	TokenRepo
+
+	GetStorage() Storage
+}
+
+type TokenRepo interface {
+	StoreTokens(
+		c.Context, string, []entities.Token,
+	) error
+
+	AddToken(
+		c.Context, string, entities.Token,
+	) error
+
+	ListTokens(
+		c.Context, string,
+	) ([]entities.Token, error)
+
+	GetTokenByAddress(
+		c.Context, string, string,
+	) (entities.Token, error)
+}
+
+type PoolRepo interface {
+	ListPools(
+		c.Context, string,
+	) ([]entities.TradePool, error)
+
+	StorePools(
+		c.Context, string, []entities.TradePool,
+	) error
+
+	AddPool(
+		c.Context, entities.TradePool, string,
+	) error
+
+	GetByTokens(
+		c.Context, string, entities.TokenPair,
+	) ([]entities.TradePool, error)
+}
+
+type Storage interface {
 	Store(
 		c.Context, string, []byte,
 	) error
@@ -14,38 +59,6 @@ type Repository interface {
 	Read(
 		c.Context, string,
 	) ([]byte, error)
-
-	GetByTokens(
-		c.Context, string, TokenPair,
-	) ([]TradePool, error)
-
-	ListPools(
-		c.Context, string,
-	) ([]TradePool, error)
-
-	StorePools(
-		c.Context, string, []TradePool,
-	) error
-
-	AddPool(
-		c.Context, TradePool, string,
-	) error
-
-	StoreTokens(
-		c.Context, string, []Token,
-	) error
-
-	AddToken(
-		c.Context, string, Token,
-	) error
-
-	ListTokens(
-		c.Context, string,
-	) ([]Token, error)
-
-	GetTokenByAddress(
-		c.Context, string, string,
-	) (Token, error)
 
 	Clear(
 		c.Context, string,
@@ -57,52 +70,44 @@ type Repository interface {
 }
 
 type TradeProvider interface {
+	GetClient(c.Context) interface{}
+
+	ProviderStore
+}
+
+type ProviderStore interface {
 	AddToken(
-		c.Context, Token,
+		c.Context, entities.Token,
 	) error
 
 	GetToken(
 		c.Context, string,
-	) (Token, error)
+	) (entities.Token, error)
 
 	RemoveToken(
-		c.Context, Token,
+		c.Context, entities.Token,
 	) error
 
 	SetTokens(
-		c.Context, []Token,
+		c.Context, []entities.Token,
 	) error
 
 	ListTokens(
 		c.Context,
-	) []Token
+	) []entities.Token
 
 	Clear()
 }
 
 type SmartContract interface {
-	AddBaseToken(
-		c.Context, Token,
-	) (interface{}, error)
+	ContractPairs
+	ContractAPI
+	Trade() contract.Trade
+}
 
-	BaseTokensContains(
-		c.Context, Token,
-	) (bool, error)
-
-	RemoveBaseToken(
-		c.Context, Token,
-	) (interface{}, error)
-
-	GetBaseTokens(
-		c.Context,
-	) ([]string, error)
-
-	GetProfit(
-		c.Context, TradePair,
-	) (int, error)
-
+type ContractPairs interface {
 	AddPair(
-		c.Context, TradePair,
+		c.Context, entities.TradePair,
 	) error
 
 	RemovePair(
@@ -111,41 +116,55 @@ type SmartContract interface {
 
 	GetPair(
 		c.Context, string, string,
-	) (TradePair, error)
+	) (entities.TradePair, error)
 
 	GetPairs(
-		c.Context, SwapProtocol, TokenPair,
-	) ([]TradePair, bool)
+		c.Context, entities.SwapProtocol, entities.TokenPair,
+	) ([]entities.TradePair, bool)
 
 	SetPairs(
-		c.Context, []TradePair,
+		c.Context, []entities.TradePair,
 	) error
 
-	ListPairs(c.Context) []TradePair
+	ListPairs(c.Context) []entities.TradePair
 
 	ClearPairs(c.Context)
 }
 
-type Parser interface {
-	Parse([]TokenPair) error
+type ContractAPI interface {
+	contract.API
+}
 
+type Parser interface {
+	Parse([]entities.TokenPair) error
+	ParseStore
+	ParseProtocol
+}
+
+type ParseStore interface {
 	AddPool(
-		TradePool,
+		entities.TradePool,
 	) error
 
 	RemovePool(
-		TradePool,
+		entities.TradePool,
 	) error
 
 	GetPairPools(
-		TokenPair,
-	) ([]TradePool, error)
+		entities.TokenPair,
+	) ([]entities.TradePool, error)
 
 	AddPools(
-		[]TradePool,
+		[]entities.TradePool,
 	)
 
-	ListPools() []TradePool
+	ListPools() []entities.TradePool
 
 	Clear()
+}
+
+type ParseProtocol interface {
+	SetProtocol(entities.SwapProtocol)
+	GetProtocol() entities.SwapProtocol
+	GetPoolAddress(entities.TokenPair) (string, error)
 }

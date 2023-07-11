@@ -33,7 +33,7 @@ type Blockchain struct {
 
 type Account struct {
 	Address string `env:"ACCOUNT_ADDRESS"`
-	pk      string `env:"ACCOUNT_PRIVATE_KEY"`
+	// pk      string `env:"ACCOUNT_PRIVATE_KEY"`
 }
 
 type Contract struct {

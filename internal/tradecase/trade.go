@@ -3,8 +3,10 @@ package tradecase
 import (
 	"context"
 	"fmt"
+	"log"
 
-	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/trade"
 )
 
 type TradeCase struct {
@@ -81,21 +83,21 @@ func (tc *TradeCase) SetProfitablePairs(
 		return
 	}
 
-	tradeMap, err := getTradeMap(
+	tradeMap, err := trade.GetTradeMap(
 		pools,
 	)
 	if err != nil {
 		return
 	}
 
-	tradePairs, err := getTradePairs(
+	tradePairs, err := trade.GetTradePairs(
 		tradeMap,
 	)
 	if err != nil {
 		return
 	}
 
-	prof, err := tc.GetProfitable(
+	prof, err := tc.Contract.Trade().GetProfitable(
 		ctx,
 		tradePairs,
 	)
@@ -114,167 +116,139 @@ func (tc *TradeCase) SetProfitablePairs(
 	return
 }
 
-func (tc *TradeCase) GetProfitable(
+func (tc *TradeCase) Withdraw(
 	ctx context.Context,
-	pairs []TradePair,
 ) (
-	out []TradePair,
+	tx interface{},
 	err error,
 ) {
-	for _, pair := range pairs {
-		p, _err := tc.Contract.GetProfit(
-			ctx,
-			pair,
-		)
-		if err != nil {
-			err = _err
-			return
-		}
-		if p > 0 {
-			out = append(out, pair)
-		}
+	log.Println("sending tx")
+	c, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+
+	b, err := auth.GetNextTransaction(c)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+	t, err := tc.Contract.API().Withdraw(b)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+	tx, err = auth.Transact(c, t)
+	if err != nil {
+		log.Println(err)
+
+		return
 	}
 
 	return
 }
 
-func getTradePairs(
-	tradeMap map[TokenPair]map[string]TradePool,
+func (tc *TradeCase) AddBaseToken(
+	ctx context.Context,
+	address string,
 ) (
-	tradePairs []TradePair,
+	tx interface{},
 	err error,
 ) {
-	for _, poolMap := range tradeMap {
-		n := len(poolMap)
+	c, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		switch {
-		case n < 2:
-			continue
-		case n == 2:
-			pair, _err := makeTradePair(
-				poolMap,
-			)
-			if err != nil {
-				err = _err
+	ok, err := tc.Contract.API().BaseTokensContains(
+		eth.CallOpts(c),
+		eth.ToAddress(address),
+	)
+	if err != nil {
+		return
+	}
+	if ok {
+		err = fmt.Errorf("token %v already added", address)
+		return
+	}
+	log.Println("sending tx")
 
-				return
-			}
-			tradePairs = append(
-				tradePairs,
-				pair,
-			)
-		case n > 2:
-			tradePairs = deleteDublicates(
-				splitPoolsOnPairs(poolMap),
-			)
-		}
+	auth := tc.Provider.GetClient(c).(*eth.Client)
+
+	b, err := auth.GetNextTransaction(c)
+	if err != nil {
+
+		return
+	}
+
+	t, err := tc.Contract.API().AddBaseToken(
+		b, eth.ToAddress(address),
+	)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+	tx, err = auth.Transact(c, t)
+	if err != nil {
+		log.Println(err)
+
+		return
 	}
 
 	return
 }
 
-func getTradeMap(
-	pools []TradePool,
+func (tc *TradeCase) RmBaseToken(
+	ctx context.Context,
+	address string,
 ) (
-	trade map[TokenPair]map[string]TradePool,
+	tx interface{},
 	err error,
 ) {
-	trade = make(map[TokenPair]map[string]TradePool)
+	c, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	for _, pool := range pools {
-		_, ok := trade[pool.Pair]
-		if !ok {
-			trade[pool.Pair] = make(
-				map[string]TradePool,
-				0,
-			)
-		}
-		_, ok = trade[pool.Pair][pool.Address]
-		if ok {
-			continue
-		}
-		trade[pool.Pair][pool.Address] = pool
+	ok, err := tc.Contract.API().BaseTokensContains(
+		eth.CallOpts(c),
+		eth.ToAddress(address),
+	)
+	if err != nil {
+		return
+	}
+	if !ok {
+		err = fmt.Errorf("token %v not found", address)
+
+		return
+	}
+	log.Println("sending tx")
+
+	auth := tc.Provider.GetClient(c).(*eth.Client)
+
+	b, err := auth.GetNextTransaction(c)
+	if err != nil {
+		log.Println(err)
+
+		return
 	}
 
-	return
-}
+	t, err := tc.Contract.API().RemoveBaseToken(
+		b, eth.ToAddress(address),
+	)
+	if err != nil {
+		log.Println(err)
 
-func splitPoolsOnPairs(
-	pools map[string]TradePool,
-) (
-	pairs []TradePair,
-) {
-	addrList := make([]string, 0)
-
-	for addr, pool := range pools {
-		addrList = append(
-			addrList,
-			addr,
-		)
-		pairs = append(
-			pairs,
-			TradePair{Pool0: pool},
-		)
+		return
 	}
 
-	for n, pair := range pairs {
-		for i := len(addrList); i >= 0; i-- {
-			if i == n {
-				continue
-			}
-			pair.Pool1 = pools[addrList[i]]
-		}
-	}
+	tx, err = auth.Transact(c, t)
+	if err != nil {
+		log.Println(err)
 
-	return
-}
-
-func deleteDublicates(
-	pairs []TradePair,
-) (
-	out []TradePair,
-) {
-	out = pairs
-
-	for n, pair := range pairs {
-		if n != len(pairs) {
-			for i, p := range pairs[n+1:] {
-				if !(pair.Pool0 == p.Pool1 &&
-					pair.Pool1 == p.Pool0) ||
-					!(pair.Pool0 == p.Pool0 &&
-						pair.Pool1 == p.Pool1) {
-					continue
-				} else {
-					pairs = append(
-						out[:i-1],
-						out[i:]...,
-					)
-				}
-			}
-		}
-	}
-
-	return
-}
-
-func makeTradePair(
-	pools map[string]TradePool,
-) (
-	pair TradePair,
-	err error,
-) {
-	for _, pool := range pools {
-		if pair.Pool0 != pool {
-			pair.Pool0 = pool
-		} else if pair.Pool1 != pool {
-			pair.Pool1 = pool
-		} else {
-			err = fmt.Errorf(
-				"pair with same pools %v",
-				pool,
-			)
-			return
-		}
+		return
 	}
 
 	return

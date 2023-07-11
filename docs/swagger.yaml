@@ -37,6 +37,12 @@ definitions:
         - $ref: '#/definitions/entities.TokenPair'
         description: pair of tokens
     type: object
+  Response:
+    description: Response object
+    properties:
+      body:
+        description: returned data
+    type: object
   TokenList:
     description: Request list of tokens
     properties:
@@ -386,6 +392,56 @@ paths:
       summary: Load Pairs
       tags:
       - Trade
+  /trade/token:
+    delete:
+      consumes:
+      - application/json
+      description: Remove base token from contract
+      operationId: rmBase
+      parameters:
+      - description: Remove base token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Remove Base Token
+      tags:
+      - Trade
+    post:
+      consumes:
+      - application/json
+      description: Add base token to contract
+      operationId: addBase
+      parameters:
+      - description: Add base token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Base Token
+      tags:
+      - Trade
   /trade/tokens:
     get:
       consumes:
@@ -404,6 +460,26 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Tokens
+      tags:
+      - Trade
+  /trade/withdraw:
+    get:
+      consumes:
+      - application/json
+      description: Withdraw tokens from contract
+      operationId: withdraw
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Withdraw
       tags:
       - Trade
 swagger: "2.0"

@@ -456,6 +456,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/trade/token": {
+            "post": {
+                "description": "Add base token to contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Add Base Token",
+                "operationId": "addBase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Add base token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove base token from contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Remove Base Token",
+                "operationId": "rmBase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Remove base token",
+                        "name": "token",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/trade/tokens": {
             "get": {
                 "description": "Load unknown tokens from storage",
@@ -479,6 +554,36 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/withdraw": {
+            "get": {
+                "description": "Withdraw tokens from contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Withdraw",
+                "operationId": "withdraw",
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -543,6 +648,15 @@ const docTemplate = `{
                             "$ref": "#/definitions/entities.TokenPair"
                         }
                     ]
+                }
+            }
+        },
+        "Response": {
+            "description": "Response object",
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "returned data"
                 }
             }
         },

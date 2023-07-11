@@ -33,7 +33,6 @@ func Run(conf *config.Config) {
 	// ethereum client
 	cl, err := ethereum.NewClient(
 		conf.Blockchain.Url,
-		os.Getenv("ACCOUNT_PRIVATE_KEY"),
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -53,18 +52,30 @@ func Run(conf *config.Config) {
 		cAdress, ctr,
 		make([]entities.TradePair, 0),
 	)
-	provider := provider.NewTradeProvider(
-		ctx, cl,
+
+	provider, err := provider.NewTradeProvider(
+		ctx, conf.Blockchain.Url, os.Getenv("ACCOUNT_PRIVATE_KEY"),
 	)
-	repository := repo.NewStorage()
-	repository.UseFile(
-		"pools",
-		"./storage_test/pools_test.json",
-	)
-	repository.UseFile(
-		"tokens",
-		"./storage_test/tokens_test.json",
-	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	files := map[string]string{
+		"pools":  "./storage_test/pools_test.json",
+		"tokens": "./storage_test/tokens_test.json",
+	}
+	repository, err := repo.NewStorage(files)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// repository.UseFile(
+	// 	"pools",
+	// 	"./storage_test/pools_test.json",
+	// )
+	// repository.UseFile(
+	// 	"tokens",
+	// 	"./storage_test/tokens_test.json",
+	// )
 	tc := tradecase.New(
 		repository,
 		provider,
@@ -88,41 +99,19 @@ func Run(conf *config.Config) {
 	tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
 
 	err = tc.SetTokens(ctx, "tokens")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	pairList := make([]entities.TokenPair, 0)
 	pairList = append(pairList, tokenPair)
 
-	// parseUni := parser.NewUniV2(entities.SwapProtocol{
-	// 	Name:       "Uniswap-V2",
-	// 	Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
-	// 	SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
-	// },
-	// 	pairList,
-	// )
-	// tc.SetParser(&parseUni)
-	// tc.ParseWrite(ctx, "pools", pairList)
-
-	// parseSushi := parser.NewSushiV2(entities.SwapProtocol{
-	// 	Name:       "Sushiswap-V2",
-	// 	Factory:    "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
-	// 	SwapRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
-	// },
-	// 	pairList,
-	// )
-	// tc.SetParser(&parseSushi)
-	// tc.ParseWrite(ctx, "pools", pairList)
-
-	parseUniV3 := parser.NewUniV3(
-		pairList,
-		entities.SwapProtocol{
-			Name:       "Uniswap-V3",
-			Factory:    "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-			SwapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-		},
-	)
-
-	p := make(map[string]tradecase.Parser)
-	p["uniswap-v3"] = &parseUniV3
+	p := parser.NewParser(entities.SwapProtocol{
+		Name:       "Uniswap-V2",
+		Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+		SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+	})
+	// p["uniswap-v3"] = &parseUniV3
 	pc := tradecase.NewParseCase(
 		repository,
 		p,
@@ -175,11 +164,8 @@ func Run(conf *config.Config) {
 }
 
 func IsDeployed(address string) bool {
-	if address == "" {
-		return false
-	}
 
-	return true
+	return address != ""
 }
 
 func Deploy(conf *config.Config) (string, error) {

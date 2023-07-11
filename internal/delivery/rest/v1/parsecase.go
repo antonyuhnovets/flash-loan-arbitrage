@@ -36,8 +36,9 @@ func (pr *parsecaseRoutes) ReadParsed(
 			),
 		)
 	}
+
 	pools := listPools{
-		Pools: pr.pc.Pools,
+		Pools: pr.pc.Parser.ListPools(),
 	}
 	respondOk(c, pools)
 
@@ -60,7 +61,7 @@ func (pr *parsecaseRoutes) ListTokens(
 		Tokens: make([]entities.Token, 0),
 	}
 
-	out, err := pr.pc.Repo.ListTokens(c, "tokens")
+	out, err := pr.pc.Repository.ListTokens(c, "tokens")
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -76,8 +77,6 @@ func (pr *parsecaseRoutes) ListTokens(
 	res.Tokens = out
 
 	respondOk(c, res)
-
-	return
 }
 
 // @Summary     Add Tokens
@@ -111,7 +110,7 @@ func (pr *parsecaseRoutes) AddTokens(
 		return
 	}
 
-	err = pr.pc.Repo.StoreTokens(c, "tokens", tokens.Tokens)
+	err = pr.pc.Repository.StoreTokens(c, "tokens", tokens.Tokens)
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -123,9 +122,8 @@ func (pr *parsecaseRoutes) AddTokens(
 		)
 		return
 	}
-	respondCreated(c, tokens)
 
-	return
+	respondCreated(c, tokens)
 }
 
 // @Summary     Get Pools
@@ -145,7 +143,7 @@ func (pr *parsecaseRoutes) ListPools(
 		Pools: make([]entities.TradePool, 0),
 	}
 
-	out, err := pr.pc.Repo.ListPools(c, "pools")
+	out, err := pr.pc.Repository.ListPools(c, "pools")
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -160,8 +158,6 @@ func (pr *parsecaseRoutes) ListPools(
 	res.Pools = out
 
 	respondOk(c, res)
-
-	return
 }
 
 // @Summary     Add Pools
@@ -195,7 +191,7 @@ func (pr *parsecaseRoutes) AddPools(
 		return
 	}
 
-	err = pr.pc.Repo.StorePools(c, "pools", pools.Pools)
+	err = pr.pc.Repository.StorePools(c, "pools", pools.Pools)
 	if err != nil {
 		errorInufficientStorage(
 			c, err.Error(),
@@ -207,9 +203,8 @@ func (pr *parsecaseRoutes) AddPools(
 		)
 		return
 	}
-	respondCreated(c, pools)
 
-	return
+	respondCreated(c, pools)
 }
 
 func NewParsecaseRouter(

@@ -21,16 +21,21 @@ type listTokens struct {
 	Tokens []entities.Token `json:"tokens" bson:"tokens"` // list of tokens
 } //@name TokenList
 
-// @Description Map of Token pairs with their pools
-type tradeMap struct {
-	PairsPools map[entities.TokenPair][]entities.TradePool
-} // @name TradeMap
+// @Description Token address input
+// type tokenAddress struct {
+// Address string `json:"address"`
+// } // @name TokenAddress
 
 // @Description Request for searching trade pair
 type tokenPair struct {
 	Protocol  entities.SwapProtocol `json:"protocol" bson:"protocol"`   // trade protocol
 	TokenPair entities.TokenPair    `json:"tokenPair" bson:"tokenPair"` // pair of tokens
 } //@name RequestPairs
+
+// @Description Transaction response
+// type transaction struct {
+// 	Transaction string `json:"transaction" bson:"transaction"` // transaction
+// } //@name Transaction
 
 // @Description Response object
 type response struct {
@@ -48,6 +53,10 @@ func respondCreated(c *gin.Context, body interface{}) {
 func respondAccepted(c *gin.Context, body interface{}) {
 	c.JSON(202, body)
 }
+
+// func respondNoContent(c *gin.Context, body interface{}) {
+// 	c.JSON(204, body)
+// }
 
 // @Description Error response object
 type responseErr struct {
