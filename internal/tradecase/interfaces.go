@@ -70,9 +70,33 @@ type Storage interface {
 }
 
 type TradeProvider interface {
-	GetClient(c.Context) interface{}
+	ClientManager
 
 	ProviderStore
+}
+
+type ClientManager interface {
+	GetClient(c.Context) Client
+}
+
+type Client interface {
+	Setup(c.Context, interface{}) error
+
+	ClientGet() interface{}
+
+	UseWallet(interface{})
+
+	GetBallance(c.Context) (int, error)
+
+	GetChainID(c.Context) interface{}
+
+	DialContract(string) (interface{}, error)
+
+	GetNextTransaction(c.Context) (interface{}, error)
+
+	UpdateChainID(c.Context) error
+
+	Transact(c.Context, interface{}) (interface{}, error)
 }
 
 type ProviderStore interface {

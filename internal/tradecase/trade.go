@@ -7,6 +7,7 @@ import (
 
 	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/trade"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type TradeCase struct {
@@ -126,7 +127,8 @@ func (tc *TradeCase) Withdraw(
 	c, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	// auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	auth := tc.Provider.GetClient(ctx)
 
 	b, err := auth.GetNextTransaction(c)
 	if err != nil {
@@ -135,7 +137,7 @@ func (tc *TradeCase) Withdraw(
 		return
 	}
 
-	t, err := tc.Contract.API().Withdraw(b)
+	t, err := tc.Contract.API().Withdraw(b.(*bind.TransactOpts))
 	if err != nil {
 		log.Println(err)
 
@@ -175,7 +177,8 @@ func (tc *TradeCase) AddBaseToken(
 	}
 	log.Println("sending tx")
 
-	auth := tc.Provider.GetClient(c).(*eth.Client)
+	// auth := tc.Provider.GetClient(c).(*eth.Client)
+	auth := tc.Provider.GetClient(c)
 
 	b, err := auth.GetNextTransaction(c)
 	if err != nil {
@@ -184,7 +187,7 @@ func (tc *TradeCase) AddBaseToken(
 	}
 
 	t, err := tc.Contract.API().AddBaseToken(
-		b, eth.ToAddress(address),
+		b.(*bind.TransactOpts), eth.ToAddress(address),
 	)
 	if err != nil {
 		log.Println(err)
@@ -226,7 +229,8 @@ func (tc *TradeCase) RmBaseToken(
 	}
 	log.Println("sending tx")
 
-	auth := tc.Provider.GetClient(c).(*eth.Client)
+	// auth := tc.Provider.GetClient(c).(*eth.Client)
+	auth := tc.Provider.GetClient(c)
 
 	b, err := auth.GetNextTransaction(c)
 	if err != nil {
@@ -236,7 +240,7 @@ func (tc *TradeCase) RmBaseToken(
 	}
 
 	t, err := tc.Contract.API().RemoveBaseToken(
-		b, eth.ToAddress(address),
+		b.(*bind.TransactOpts), eth.ToAddress(address),
 	)
 	if err != nil {
 		log.Println(err)

@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 	v1 "github.com/antonyuhnovets/flash-loan-arbitrage/internal/delivery/rest/v1"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
@@ -42,14 +43,14 @@ func Run(conf *config.Config) {
 	cAdress := common.HexToAddress(
 		conf.Contract.Address,
 	)
-	ctr, err := cl.DialContract(cAdress)
+	ctr, err := cl.DialContract(conf.Contract.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// tradecase
 	contract := contract.NewContract(
-		cAdress, ctr,
+		cAdress, ctr.(*api.Api),
 		make([]entities.TradePair, 0),
 	)
 
@@ -68,14 +69,7 @@ func Run(conf *config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// repository.UseFile(
-	// 	"pools",
-	// 	"./storage_test/pools_test.json",
-	// )
-	// repository.UseFile(
-	// 	"tokens",
-	// 	"./storage_test/tokens_test.json",
-	// )
+
 	tc := tradecase.New(
 		repository,
 		provider,

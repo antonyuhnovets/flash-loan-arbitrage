@@ -32,17 +32,25 @@ func NewClient(url string) (
 	return
 }
 
-func (c *Client) Setup(ctx context.Context, wall *Wallet) (
+func (c *Client) Setup(ctx context.Context, wall interface{}) (
 	err error,
 ) {
-	c.UseWallet(wall)
-	c.setChainID(c.GetChainID(ctx))
+	c.UseWallet(wall.(*Wallet))
+	c.setChainID(c.GetChainID(ctx).(*big.Int))
 
 	return
 }
 
-func (c *Client) UseWallet(wall *Wallet) {
-	c.Wallet = wall
+func (c *Client) ClientGet() (
+	cl interface{},
+) {
+	cl = c.Client
+
+	return
+}
+
+func (c *Client) UseWallet(wall interface{}) {
+	c.Wallet = wall.(*Wallet)
 }
 
 func (c *Client) GetBallance(ctx context.Context) (
@@ -59,7 +67,7 @@ func (c *Client) setChainID(chainId *big.Int) {
 	c.ChainID = chainId
 }
 
-func (c *Client) GetChainID(ctx context.Context) *big.Int {
+func (c *Client) GetChainID(ctx context.Context) interface{} {
 	chainId, err := c.Client.ChainID(ctx)
 	if err != nil {
 		return nil
@@ -68,8 +76,11 @@ func (c *Client) GetChainID(ctx context.Context) *big.Int {
 	return chainId
 }
 
-func (c *Client) DialContract(address common.Address) (*api.Api, error) {
-	contract, err := api.NewApi(address, c.Client)
+func (c *Client) DialContract(address string) (interface{}, error) {
+	contract, err := api.NewApi(
+		common.HexToAddress(address),
+		c.Client,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +91,7 @@ func (c *Client) DialContract(address common.Address) (*api.Api, error) {
 // GetNextTransaction returns the next transaction in the pending transaction queue
 // NOTE: this is not an optimized way
 func (c *Client) GetNextTransaction(ctx context.Context) (
-	opts *bind.TransactOpts,
+	opts interface{},
 	err error,
 ) {
 	cont, cancel := context.WithCancel(ctx)
@@ -126,7 +137,7 @@ func (c *Client) UpdateChainID(ctx context.Context) (
 	cont, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	chainID := c.GetChainID(cont)
+	chainID := c.GetChainID(cont).(*big.Int)
 	if chainID == nil {
 		err = fmt.Errorf("fail getting chain id")
 
@@ -137,14 +148,14 @@ func (c *Client) UpdateChainID(ctx context.Context) (
 	return
 }
 
-func (c *Client) Transact(ctx context.Context, t *types.Transaction) (
-	tx *types.Transaction,
+func (c *Client) Transact(ctx context.Context, t interface{}) (
+	tx interface{},
 	err error,
 ) {
 	cont, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	sTx, err := c.SignTx(cont, t)
+	sTx, err := c.SignTx(cont, t.(*types.Transaction))
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +167,7 @@ func (c *Client) Transact(ctx context.Context, t *types.Transaction) (
 
 	tx = sTx
 
-	c.Client.SendTransaction(cont, tx)
+	c.Client.SendTransaction(cont, tx.(*types.Transaction))
 
 	return
 }
