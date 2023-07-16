@@ -8,10 +8,8 @@ import (
 type Config struct {
 	Log
 	HttpServer
-	Blockchain
-	Account
-	Contract
 	Storage
+	Blockchain
 }
 
 type Log struct {
@@ -24,16 +22,33 @@ type HttpServer struct {
 
 type Storage struct {
 	Type string `env:"STORAGE_TYPE" env-default:"localfile"`
+	Localstorage
+	Database
+}
+
+type Localstorage struct {
 	Path string `env:"STORAGE_PATH" env-default:"./storage_test/test.json"`
 }
+
+type Database struct {
+	Driver   string `env:"DATABASE_DRIVER"`
+	Host     string `env:"DATABASE_HOST"`
+	Port     string `env:"DATABASE_PORT"`
+	Username string `env:"DATABASE_USERNAME"`
+	Password string `env:"DATABASE_PASSWORD"`
+	Name     string `env:"DATABASE_NAME"`
+}
+
 type Blockchain struct {
 	Name string `env:"BLOCKCHAIN_NAME" env-default:"goerli"`
 	Url  string `env:"BLOCKCHAIN_RPC_URL"`
+	Account
+	Contract
 }
 
 type Account struct {
 	Address string `env:"ACCOUNT_ADDRESS"`
-	pk      string `env:"ACCOUNT_PRIVATE_KEY"`
+	// pk      string `env:"ACCOUNT_PRIVATE_KEY"`
 }
 
 type Contract struct {

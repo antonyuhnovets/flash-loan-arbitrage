@@ -22,7 +22,7 @@ definitions:
       pools:
         description: list of trade pools
         items:
-          $ref: '#/definitions/entities.TradePool'
+          $ref: '#/definitions/entities.Pool'
         type: array
     type: object
   RequestPairs:
@@ -37,6 +37,12 @@ definitions:
         - $ref: '#/definitions/entities.TokenPair'
         description: pair of tokens
     type: object
+  Response:
+    description: Response object
+    properties:
+      body:
+        description: returned data
+    type: object
   TokenList:
     description: Request list of tokens
     properties:
@@ -46,19 +52,34 @@ definitions:
           $ref: '#/definitions/entities.Token'
         type: array
     type: object
+  entities.Pool:
+    properties:
+      address:
+        type: string
+      id:
+        type: integer
+      pair:
+        $ref: '#/definitions/entities.TokenPair'
+      protocol:
+        $ref: '#/definitions/entities.SwapProtocol'
+    type: object
   entities.SwapProtocol:
     properties:
-      factoryAddress:
+      factory:
         type: string
-      protocolName:
+      id:
+        type: integer
+      name:
         type: string
-      swapRouter:
+      router:
         type: string
     type: object
   entities.Token:
     properties:
       address:
         type: string
+      id:
+        type: integer
       name:
         type: string
       wei:
@@ -66,6 +87,8 @@ definitions:
     type: object
   entities.TokenPair:
     properties:
+      id:
+        type: integer
       token0:
         $ref: '#/definitions/entities.Token'
       token1:
@@ -74,18 +97,9 @@ definitions:
   entities.TradePair:
     properties:
       pool0:
-        $ref: '#/definitions/entities.TradePool'
+        $ref: '#/definitions/entities.Pool'
       pool1:
-        $ref: '#/definitions/entities.TradePool'
-    type: object
-  entities.TradePool:
-    properties:
-      address:
-        type: string
-      pair:
-        $ref: '#/definitions/entities.TokenPair'
-      tradeProvider:
-        $ref: '#/definitions/entities.SwapProtocol'
+        $ref: '#/definitions/entities.Pool'
     type: object
 info:
   contact: {}
@@ -95,73 +109,62 @@ info:
   title: Flash Loan Arbitrage bot
   version: "1.0"
 paths:
-  /contract/tokens:
+  /contract/pairs:
     get:
       consumes:
       - application/json
-      description: Request token list
-      operationId: listTokens
+      description: Get full list of pairs from contract tradecase memory
+      operationId: listPairs
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/TokenList'
-      summary: List Tokens
+            $ref: '#/definitions/ListPairs'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: List Pairs
       tags:
-      - Contract
+      - tradecase
     post:
       consumes:
       - application/json
-      description: Add list of tokens
-      operationId: addTokens
+      description: Add list of pairs to contract tradecase memory
+      operationId: addPairs
       parameters:
-      - description: Add tokens
+      - description: Add pairs
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/TokenList'
+          $ref: '#/definitions/ListPairs'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/TokenList'
+            $ref: '#/definitions/ListPairs'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
-      summary: Add Tokens
+      summary: Add Pairs
       tags:
-      - Contract
-  /contract/tokens/base:
-    get:
+      - tradecase
+  /contract/pairs/find:
+    post:
       consumes:
       - application/json
-      description: Request base token list
-      operationId: getTokens
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/TokenList'
-        "507":
-          description: Insufficient Storage
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Get Tokens
-      tags:
-      - Contract
-  /provider/pairs:
-    get:
-      consumes:
-      - application/json
-      description: Get list of pairs
+      description: Get list of pool pairs from contract tradecase memory by token
+        pair & protocol
       operationId: getPairs
       parameters:
       - description: Get pairs
@@ -187,63 +190,126 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Pairs
       tags:
-      - Provider
-    post:
-      consumes:
-      - application/json
-      description: Add list of pairs
-      operationId: addPairs
-      parameters:
-      - description: Add pairs
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/ListPairs'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/ListPairs'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Add Pairs
-      tags:
-      - Provider
-  /provider/pairs/list:
+      - tradecase
+  /contract/tokens/base:
     get:
       consumes:
       - application/json
-      description: Get full list of pairs
-      operationId: listPairs
+      description: Request base token list from deployed contract memory
+      operationId: getTokens
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ListPairs'
+            $ref: '#/definitions/TokenList'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: List base Tokens
+      tags:
+      - trade
+  /parser/pools:
+    get:
+      consumes:
+      - application/json
+      description: Save pools from parser to storage
+      operationId: ParseWrite
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListPools'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Store parsed pools
+      tags:
+      - parse
+  /provider/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Request token list
+      operationId: listTokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+      summary: List Tokens
+      tags:
+      - tradecase
+    post:
+      consumes:
+      - application/json
+      description: Add list of tokens
+      operationId: addTokens
+      parameters:
+      - description: Add tokens
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TokenList'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Not Found
+      summary: Add Tokens
+      tags:
+      - tradecase
+  /storage/pools:
+    delete:
+      consumes:
+      - application/json
+      description: Delete pools from storage
+      operationId: deletePools
+      parameters:
+      - description: Delete pools
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ListPools'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListPools'
+        "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
-      summary: List Pairs
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Delete Pools
       tags:
-      - Provider
-  /storage/pools:
+      - parsecase
+      - tradecase
     get:
       consumes:
       - application/json
-      description: Get list of pools
-      operationId: getPools
+      description: Get list of all pools from storage
+      operationId: getPoolList
       produces:
       - application/json
       responses:
@@ -261,11 +327,12 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Pools
       tags:
-      - Storage
+      - parsecase
+      - tradecase
     post:
       consumes:
       - application/json
-      description: Add list of pools
+      description: Add list of pools to storage
       operationId: addPools
       parameters:
       - description: Add pools
@@ -285,6 +352,58 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Pools
+      tags:
+      - parsecase
+      - tradecase
+  /storage/tokens:
+    delete:
+      consumes:
+      - application/json
+      description: Delete tokens from storage
+      operationId: deleteTokens
+      parameters:
+      - description: Delete tokens
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Delete Tokens
+      tags:
+      - parsecase
+      - tradecase
+    get:
+      consumes:
+      - application/json
+      description: Get list of all tokens from storage
+      operationId: getTokensList
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenList'
         "409":
           description: Conflict
           schema:
@@ -293,14 +412,66 @@ paths:
           description: Insufficient Storage
           schema:
             $ref: '#/definitions/ErrorResponse'
-      summary: Add Pools
+      summary: Get Tokens
       tags:
-      - Storage
+      - parsecase
+      - tradecase
+    post:
+      consumes:
+      - application/json
+      description: Add list of tokens to storage
+      operationId: storeTokens
+      parameters:
+      - description: Add tokens
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/TokenList'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TokenList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Tokens
+      tags:
+      - parsecase
+      - tradecase
+  /trade/core/withdraw:
+    get:
+      consumes:
+      - application/json
+      description: Withdraw tokens from contract
+      operationId: withdraw
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Withdraw
+      tags:
+      - trade
   /trade/pairs:
     get:
       consumes:
       - application/json
-      description: Load profitable pairs
+      description: Load profitable pool pairs from storage
       operationId: loadPairs
       produces:
       - application/json
@@ -315,12 +486,12 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Pairs
       tags:
-      - Trade
+      - trade
   /trade/tokens:
     get:
       consumes:
       - application/json
-      description: Load unknown tokens
+      description: Load unknown tokens from storage
       operationId: loadTokens
       produces:
       - application/json
@@ -329,11 +500,61 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TokenList'
-        "507":
-          description: Insufficient Storage
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Tokens
       tags:
-      - Trade
+      - trade
+  /trade/tokens/base:
+    delete:
+      consumes:
+      - application/json
+      description: Remove base token from contract
+      operationId: rmBase
+      parameters:
+      - description: Remove base token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Remove Base Token
+      tags:
+      - trade
+    post:
+      consumes:
+      - application/json
+      description: Add base token to contract
+      operationId: addBase
+      parameters:
+      - description: Add base token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Response'
+        "507":
+          description: Insufficient Storage
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add Base Token
+      tags:
+      - trade
 swagger: "2.0"

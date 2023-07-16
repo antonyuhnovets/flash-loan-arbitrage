@@ -13,7 +13,7 @@ type listPairs struct {
 
 // @Description Request list of trading pools
 type listPools struct {
-	Pools []entities.TradePool `json:"pools" bson:"pools"` // list of trade pools
+	Pools []entities.Pool `json:"pools" bson:"pools" gorm:"type:pools"` // list of trade pools
 } //@name ListPools
 
 // @Description Request list of tokens
@@ -21,11 +21,21 @@ type listTokens struct {
 	Tokens []entities.Token `json:"tokens" bson:"tokens"` // list of tokens
 } //@name TokenList
 
+// @Description Token address input
+// type tokenAddress struct {
+// Address string `json:"address"`
+// } // @name TokenAddress
+
 // @Description Request for searching trade pair
 type tokenPair struct {
 	Protocol  entities.SwapProtocol `json:"protocol" bson:"protocol"`   // trade protocol
 	TokenPair entities.TokenPair    `json:"tokenPair" bson:"tokenPair"` // pair of tokens
 } //@name RequestPairs
+
+// @Description Transaction response
+// type transaction struct {
+// 	Transaction string `json:"transaction" bson:"transaction"` // transaction
+// } //@name Transaction
 
 // @Description Response object
 type response struct {

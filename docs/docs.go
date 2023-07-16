@@ -19,9 +19,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contract/tokens": {
+        "/contract/pairs": {
             "get": {
-                "description": "Request token list",
+                "description": "Get full list of pairs from contract tradecase memory",
                 "consumes": [
                     "application/json"
                 ],
@@ -29,21 +29,33 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contract"
+                    "tradecase"
                 ],
-                "summary": "List Tokens",
-                "operationId": "listTokens",
+                "summary": "List Pairs",
+                "operationId": "listPairs",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/TokenList"
+                            "$ref": "#/definitions/ListPairs"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Add list of tokens",
+                "description": "Add list of pairs to contract tradecase memory",
                 "consumes": [
                     "application/json"
                 ],
@@ -51,18 +63,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contract"
+                    "tradecase"
                 ],
-                "summary": "Add Tokens",
-                "operationId": "addTokens",
+                "summary": "Add Pairs",
+                "operationId": "addPairs",
                 "parameters": [
                     {
-                        "description": "Add tokens",
+                        "description": "Add pairs",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/TokenList"
+                            "$ref": "#/definitions/ListPairs"
                         }
                     }
                 ],
@@ -70,7 +82,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/TokenList"
+                            "$ref": "#/definitions/ListPairs"
                         }
                     },
                     "400": {
@@ -82,9 +94,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/contract/tokens/base": {
-            "get": {
-                "description": "Request base token list",
+        "/contract/pairs/find": {
+            "post": {
+                "description": "Get list of pool pairs from contract tradecase memory by token pair \u0026 protocol",
                 "consumes": [
                     "application/json"
                 ],
@@ -92,37 +104,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Contract"
-                ],
-                "summary": "Get Tokens",
-                "operationId": "getTokens",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/TokenList"
-                        }
-                    },
-                    "507": {
-                        "description": "Insufficient Storage",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/provider/pairs": {
-            "get": {
-                "description": "Get list of pairs",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Provider"
+                    "tradecase"
                 ],
                 "summary": "Get Pairs",
                 "operationId": "getPairs",
@@ -157,9 +139,11 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Add list of pairs",
+            }
+        },
+        "/contract/tokens/base": {
+            "get": {
+                "description": "Request base token list from deployed contract memory",
                 "consumes": [
                     "application/json"
                 ],
@@ -167,30 +151,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider"
+                    "trade"
                 ],
-                "summary": "Add Pairs",
-                "operationId": "addPairs",
-                "parameters": [
-                    {
-                        "description": "Add pairs",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ListPairs"
-                        }
-                    }
-                ],
+                "summary": "List base Tokens",
+                "operationId": "getTokens",
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ListPairs"
+                            "$ref": "#/definitions/TokenList"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "507": {
+                        "description": "Insufficient Storage",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -198,9 +171,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/provider/pairs/list": {
+        "/parser/pools": {
             "get": {
-                "description": "Get full list of pairs",
+                "description": "Save pools from parser to storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -208,25 +181,82 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Provider"
+                    "parse"
                 ],
-                "summary": "List Pairs",
-                "operationId": "listPairs",
+                "summary": "Store parsed pools",
+                "operationId": "ParseWrite",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ListPairs"
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/provider/tokens": {
+            "get": {
+                "description": "Request token list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tradecase"
+                ],
+                "summary": "List Tokens",
+                "operationId": "listTokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add list of tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tradecase"
+                ],
+                "summary": "Add Tokens",
+                "operationId": "addTokens",
+                "parameters": [
+                    {
+                        "description": "Add tokens",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -236,7 +266,7 @@ const docTemplate = `{
         },
         "/storage/pools": {
             "get": {
-                "description": "Get list of pools",
+                "description": "Get list of all pools from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -244,10 +274,11 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Storage"
+                    "parsecase",
+                    "tradecase"
                 ],
                 "summary": "Get Pools",
-                "operationId": "getPools",
+                "operationId": "getPoolList",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -270,7 +301,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Add list of pools",
+                "description": "Add list of pools to storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -278,7 +309,8 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Storage"
+                    "parsecase",
+                    "tradecase"
                 ],
                 "summary": "Add Pools",
                 "operationId": "addPools",
@@ -306,8 +338,48 @@ const docTemplate = `{
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete pools from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parsecase",
+                    "tradecase"
+                ],
+                "summary": "Delete Pools",
+                "operationId": "deletePools",
+                "parameters": [
+                    {
+                        "description": "Delete pools",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -321,9 +393,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/trade/pairs": {
+        "/storage/tokens": {
             "get": {
-                "description": "Load profitable pairs",
+                "description": "Get list of all tokens from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -331,7 +403,166 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Trade"
+                    "parsecase",
+                    "tradecase"
+                ],
+                "summary": "Get Tokens",
+                "operationId": "getTokensList",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add list of tokens to storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parsecase",
+                    "tradecase"
+                ],
+                "summary": "Add Tokens",
+                "operationId": "storeTokens",
+                "parameters": [
+                    {
+                        "description": "Add tokens",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete tokens from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parsecase",
+                    "tradecase"
+                ],
+                "summary": "Delete Tokens",
+                "operationId": "deleteTokens",
+                "parameters": [
+                    {
+                        "description": "Delete tokens",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/core/withdraw": {
+            "get": {
+                "description": "Withdraw tokens from contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trade"
+                ],
+                "summary": "Withdraw",
+                "operationId": "withdraw",
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/pairs": {
+            "get": {
+                "description": "Load profitable pool pairs from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trade"
                 ],
                 "summary": "Load Pairs",
                 "operationId": "loadPairs",
@@ -353,7 +584,7 @@ const docTemplate = `{
         },
         "/trade/tokens": {
             "get": {
-                "description": "Load unknown tokens",
+                "description": "Load unknown tokens from storage",
                 "consumes": [
                     "application/json"
                 ],
@@ -361,7 +592,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Trade"
+                    "trade"
                 ],
                 "summary": "Load Tokens",
                 "operationId": "loadTokens",
@@ -370,6 +601,81 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/TokenList"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/tokens/base": {
+            "post": {
+                "description": "Add base token to contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trade"
+                ],
+                "summary": "Add Base Token",
+                "operationId": "addBase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Add base token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "507": {
+                        "description": "Insufficient Storage",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove base token from contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trade"
+                ],
+                "summary": "Remove Base Token",
+                "operationId": "rmBase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Remove base token",
+                        "name": "token",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
                         }
                     },
                     "507": {
@@ -414,7 +720,7 @@ const docTemplate = `{
                     "description": "list of trade pools",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/entities.TradePool"
+                        "$ref": "#/definitions/entities.Pool"
                     }
                 }
             }
@@ -441,6 +747,15 @@ const docTemplate = `{
                 }
             }
         },
+        "Response": {
+            "description": "Response object",
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "returned data"
+                }
+            }
+        },
         "TokenList": {
             "description": "Request list of tokens",
             "type": "object",
@@ -454,16 +769,36 @@ const docTemplate = `{
                 }
             }
         },
+        "entities.Pool": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "pair": {
+                    "$ref": "#/definitions/entities.TokenPair"
+                },
+                "protocol": {
+                    "$ref": "#/definitions/entities.SwapProtocol"
+                }
+            }
+        },
         "entities.SwapProtocol": {
             "type": "object",
             "properties": {
-                "factoryAddress": {
+                "factory": {
                     "type": "string"
                 },
-                "protocolName": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 },
-                "swapRouter": {
+                "router": {
                     "type": "string"
                 }
             }
@@ -473,6 +808,9 @@ const docTemplate = `{
             "properties": {
                 "address": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -485,6 +823,9 @@ const docTemplate = `{
         "entities.TokenPair": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "token0": {
                     "$ref": "#/definitions/entities.Token"
                 },
@@ -497,24 +838,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "pool0": {
-                    "$ref": "#/definitions/entities.TradePool"
+                    "$ref": "#/definitions/entities.Pool"
                 },
                 "pool1": {
-                    "$ref": "#/definitions/entities.TradePool"
-                }
-            }
-        },
-        "entities.TradePool": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "pair": {
-                    "$ref": "#/definitions/entities.TokenPair"
-                },
-                "tradeProvider": {
-                    "$ref": "#/definitions/entities.SwapProtocol"
+                    "$ref": "#/definitions/entities.Pool"
                 }
             }
         }

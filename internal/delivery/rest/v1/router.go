@@ -22,7 +22,12 @@ import (
 // @version     1.0
 // @BasePath 	/v1
 // @license.name  MIT
-func NewRouter(h *gin.Engine, l logger.Interface, t tradecase.TradeCase) {
+func NewRouter(
+	h *gin.Engine,
+	l logger.Interface,
+	t tradecase.TradeCase,
+	p tradecase.ParseCase,
+) {
 	// Options
 	h.Use(gin.Logger())
 	h.Use(gin.Recovery())
@@ -31,18 +36,33 @@ func NewRouter(h *gin.Engine, l logger.Interface, t tradecase.TradeCase) {
 	// docs.SwaggerInfo.BasePath = "/v1"
 	// sh := swaggerFiles.NewHandler()
 	// swaggerHandler := ginSwagger.WrapHandler(sh)
-	swaggerHandler := ginSwagger.DisablingWrapHandler(swaggerFiles.Handler, "DISABLE_SWAGGER_HTTP_HANDLER")
-	h.GET("/swagger/*any", swaggerHandler)
+	swagHand := ginSwagger.DisablingWrapHandler(
+		swaggerFiles.Handler,
+		"DISABLE_SWAGGER_HTTP_HANDLER",
+	)
+	h.GET(
+		"/swagger/*any",
+		swagHand,
+	)
 
 	// K8s probe
-	h.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
+	h.GET(
+		"/healthz",
+		func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		},
+	)
 
 	// Prometheus metrics
-	h.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	h.GET(
+		"/metrics",
+		gin.WrapH(promhttp.Handler()),
+	)
 
 	// Routers
 	handler := h.Group("/v1")
 	{
 		NewTradecaseRouter(handler, t, l)
+		NewParsecaseRouter(handler, p, l)
 	}
 }

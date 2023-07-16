@@ -4,167 +4,301 @@ import (
 	c "context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
 
-	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	fs "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/filestorage"
 )
 
-type FileStorage struct {
-	path string
-	// f    *os.File
+type Storage struct {
+	fst *fs.FileStorage
 }
 
-func UseFile(path string) *FileStorage {
-	return &FileStorage{
-		path: path,
-	}
-}
-
-func NewFile(
-	path string,
-) (
-	*FileStorage,
-	error,
+func NewStorage(files map[string]string) (
+	st *Storage,
+	err error,
 ) {
-	f, err := os.Create(path)
-	defer f.Close()
+	s := fs.NewStorage()
+
+	err = s.Setup(files)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &FileStorage{path}, nil
+	st = &Storage{s}
+
+	return
 }
 
-func (fs *FileStorage) Store(
-	ctx c.Context, item []byte,
-) error {
-	f, err := os.OpenFile(fs.path,
-		os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	index, err := f.Write(item)
-	if err != nil {
-		return err
-	}
-
-	log.Printf(
-		"%b bytes saved to file",
-		index,
-	)
-
-	return nil
+func (s *Storage) GetStorage() tradecase.Storage {
+	return s.fst
 }
 
-func (fs *FileStorage) Read(
+func (s *Storage) GetByTokens(
 	ctx c.Context,
+	where string,
+	tokens entities.TokenPair,
 ) (
-	[]byte,
-	error,
+	pools []entities.Pool,
+	err error,
 ) {
-	var b []byte
-	b, err := os.ReadFile(fs.path)
+	// var res []entities.TradePool
+
+	err = s.fst.Read(
+		ctx,
+		where,
+		&pools,
+	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return b, nil
+	return
 }
 
-func (fs *FileStorage) GetByTokens(
-	ctx c.Context, tokens TokenPair,
+func (s *Storage) AddPool(
+	ctx c.Context,
+	pool entities.Pool,
+	where string,
 ) (
-	[]TradePool,
-	error,
+	err error,
 ) {
-	res := make([]TradePool, 0)
-
-	out, err := fs.Read(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(out, &res)
-	if err != nil {
-		return nil, err
-	}
-
-	for n, pool := range res {
-		if pool.Pair != tokens {
-			res = append(
-				res[:n],
-				res[n+1:]...,
-			)
-		}
-	}
-
-	return res, nil
-}
-
-func (fs *FileStorage) StorePool(
-	ctx c.Context, pool TradePool,
-) error {
 	b, err := json.Marshal(pool)
 	if err != nil {
-		return err
+		return
 	}
 
-	data := string(b) + "\n"
-	err = fs.Store(ctx, []byte(data))
+	err = s.fst.ContinueFile(
+		ctx,
+		where,
+		[]byte(string(b[0:])+"\n"),
+	)
 	if err != nil {
-		return err
+		if err != nil {
+			fmt.Printf("/tradecase/repo/filestorage:95 - AddPool continue file\n%s", err)
+			return
+		}
+		return
+	}
+	err = s.fst.Store(
+		ctx,
+		where,
+		[]byte("]"),
+	)
+	if err != nil {
+		fmt.Printf("/tradecase/repo/filestorage:106 - AddPool store \n%s", err)
 	}
 
-	return nil
+	return
 }
 
-func (fs *FileStorage) ListPools(
+func (s *Storage) StorePools(
 	ctx c.Context,
+	where string,
+	pools []entities.Pool,
 ) (
-	[]TradePool,
-	error,
+	err error,
 ) {
-	pools := make([]TradePool, 0)
-
-	out, err := fs.Read(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(out, &pools)
-	if err != nil {
-		return nil, err
-	}
-
-	return pools, nil
-}
-
-func (fs *FileStorage) GetTokenByAddress(
-	ctx c.Context, addr string,
-) (
-	Token,
-	error,
-) {
-	pools, err := fs.ListPools(ctx)
-	if err != nil {
-		return Token{}, err
-	}
-
 	for _, pool := range pools {
-		if pool.Pair.Token0.Address == addr {
-			return pool.Pair.Token0, nil
-		} else if pool.Pair.Token1.Address == addr {
-			return pool.Pair.Token1, nil
-		} else {
-			continue
+		err = s.AddPool(
+			ctx,
+			pool,
+			where,
+		)
+		if err != nil {
+			return
 		}
 	}
 
-	return Token{}, fmt.Errorf("token with address %s not found", addr)
+	return
 }
 
-func (fs *FileStorage) Clear(ctx c.Context) error {
-	return os.Truncate(fs.path, 0)
+func (s *Storage) ListPools(
+	ctx c.Context,
+	where string,
+) (
+	pools []entities.Pool,
+	err error,
+) {
+	err = s.fst.Read(
+		ctx,
+		where,
+		&pools,
+	)
+
+	return
+}
+
+func (s *Storage) RemovePool(
+	ctx c.Context,
+	where string,
+	pool entities.Pool,
+) (
+	err error,
+) {
+	b, err := json.Marshal(pool)
+	if err != nil {
+		return
+	}
+
+	err = s.fst.Remove(ctx, where, b)
+
+	return
+}
+
+func (s *Storage) RemovePools(
+	ctx c.Context,
+	where string,
+	pools []entities.Pool,
+) (
+	out []entities.Pool,
+	err error,
+) {
+	for _, pool := range pools {
+		err = s.RemovePool(ctx, where, pool)
+		if err != nil {
+			return
+		}
+	}
+
+	out, err = s.ListPools(ctx, where)
+
+	return
+}
+
+func (s *Storage) AddToken(
+	ctx c.Context,
+	where string,
+	token entities.Token,
+) (
+	err error,
+) {
+	b, err := json.Marshal(token)
+	if err != nil {
+		return
+	}
+
+	err = s.fst.ContinueFile(
+		ctx,
+		where,
+		[]byte(string(b[0:])+"\n"),
+	)
+	if err != nil {
+		return
+	}
+	err = s.fst.Store(
+		ctx,
+		where,
+		[]byte("]"),
+	)
+
+	return
+}
+
+func (s *Storage) RemoveToken(
+	ctx c.Context,
+	where string,
+	token entities.Token,
+) (
+	err error,
+) {
+	b, err := json.Marshal(token)
+	if err != nil {
+		return
+	}
+
+	err = s.fst.Remove(ctx, where, b)
+
+	return
+}
+
+func (s *Storage) RemoveTokens(
+	ctx c.Context,
+	where string,
+	tokens []entities.Token,
+) (
+	out []entities.Token,
+	err error,
+) {
+	for _, token := range tokens {
+		err = s.RemoveToken(ctx, where, token)
+		if err != nil {
+			return
+		}
+	}
+
+	out, err = s.ListTokens(ctx, where)
+
+	return
+}
+
+func (s *Storage) StoreTokens(
+	ctx c.Context,
+	where string,
+	tokens []entities.Token,
+) (
+	err error,
+) {
+	for _, token := range tokens {
+		err = s.AddToken(
+			ctx,
+			where,
+			token,
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (s *Storage) ListTokens(
+	ctx c.Context,
+	where string,
+) (
+	tokens []entities.Token,
+	err error,
+) {
+	err = s.fst.Read(ctx, where, tokens)
+
+	return
+}
+
+func (s *Storage) GetTokenByAddress(
+	ctx c.Context,
+	where, address string,
+) (
+	token entities.Token,
+	err error,
+) {
+	tokens, err := s.ListTokens(
+		ctx,
+		where,
+	)
+	if err != nil {
+		return
+	}
+
+	for _, t := range tokens {
+		if t.Address == address {
+			token = t
+			return
+		}
+	}
+
+	err = fmt.Errorf(
+		"token with address %s not found",
+		address,
+	)
+
+	return
+}
+
+func (s *Storage) ClearAll(ctx c.Context) (
+	err error,
+) {
+	err = s.fst.ClearAll(ctx)
+
+	return
 }
