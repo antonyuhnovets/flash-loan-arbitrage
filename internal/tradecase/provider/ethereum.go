@@ -4,7 +4,7 @@ import (
 	c "context"
 	"fmt"
 
-	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
 
 	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
@@ -13,13 +13,13 @@ import (
 type TradeProvider struct {
 	Client  *eth.Client
 	Wallets []*eth.Wallet
-	Tokens  []Token `json:"tokens"`
+	Tokens  []entities.Token `json:"tokens"`
 }
 
 func NewTradeProvider(
 	ctx c.Context,
 	url, pk string,
-	tokens ...Token,
+	tokens ...entities.Token,
 ) (
 	provider *TradeProvider,
 	err error,
@@ -97,7 +97,7 @@ func (tp *TradeProvider) AddWallet(pk string) (
 
 func (tp *TradeProvider) AddToken(
 	ctx c.Context,
-	token Token,
+	token entities.Token,
 ) (
 	err error,
 ) {
@@ -123,7 +123,7 @@ func (tp *TradeProvider) GetToken(
 	ctx c.Context,
 	address string,
 ) (
-	token Token,
+	token entities.Token,
 	err error,
 ) {
 	index, ok := tp.containToken(address)
@@ -141,7 +141,7 @@ func (tp *TradeProvider) GetToken(
 
 func (tp *TradeProvider) RemoveToken(
 	ctx c.Context,
-	token Token,
+	token entities.Token,
 ) (
 	err error,
 ) {
@@ -164,7 +164,7 @@ func (tp *TradeProvider) RemoveToken(
 
 func (tp *TradeProvider) SetTokens(
 	ctx c.Context,
-	tokens []Token,
+	tokens []entities.Token,
 ) (
 	err error,
 ) {
@@ -182,7 +182,7 @@ func (tp *TradeProvider) SetTokens(
 func (tp *TradeProvider) ListTokens(
 	ctx c.Context,
 ) (
-	tokens []Token,
+	tokens []entities.Token,
 ) {
 	tokens = tp.Tokens
 
@@ -191,7 +191,7 @@ func (tp *TradeProvider) ListTokens(
 
 func (tp *TradeProvider) Clear() {
 	new := make(
-		[]Token,
+		[]entities.Token,
 		0,
 	)
 	tp.Tokens = new

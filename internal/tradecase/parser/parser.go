@@ -35,7 +35,7 @@ func (p *Parser) Parse(pairs []entities.TokenPair) (
 
 			return
 		}
-		p.Parser.AddPool(entities.TradePool{
+		p.Parser.AddPool(entities.Pool{
 			Protocol: p.Protocol.GetProtocol(),
 			Address:  addr,
 			Pair:     pair,

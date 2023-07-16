@@ -39,33 +39,18 @@ func (s *Storage) GetByTokens(
 	where string,
 	tokens entities.TokenPair,
 ) (
-	pools []entities.TradePool,
+	pools []entities.Pool,
 	err error,
 ) {
-	var res []entities.TradePool
+	// var res []entities.TradePool
 
-	out, err := s.fst.Read(
+	err = s.fst.Read(
 		ctx,
 		where,
+		&pools,
 	)
 	if err != nil {
 		return
-	}
-
-	err = json.Unmarshal(
-		out,
-		&res,
-	)
-	if err != nil {
-		return
-	}
-
-	for _, pool := range res {
-		if pool.Pair != tokens {
-			continue
-		} else {
-			pools = append(pools, pool)
-		}
 	}
 
 	return
@@ -73,7 +58,7 @@ func (s *Storage) GetByTokens(
 
 func (s *Storage) AddPool(
 	ctx c.Context,
-	pool entities.TradePool,
+	pool entities.Pool,
 	where string,
 ) (
 	err error,
@@ -89,6 +74,10 @@ func (s *Storage) AddPool(
 		[]byte(string(b[0:])+"\n"),
 	)
 	if err != nil {
+		if err != nil {
+			fmt.Printf("/tradecase/repo/filestorage:95 - AddPool continue file\n%s", err)
+			return
+		}
 		return
 	}
 	err = s.fst.Store(
@@ -96,6 +85,9 @@ func (s *Storage) AddPool(
 		where,
 		[]byte("]"),
 	)
+	if err != nil {
+		fmt.Printf("/tradecase/repo/filestorage:106 - AddPool store \n%s", err)
+	}
 
 	return
 }
@@ -103,7 +95,7 @@ func (s *Storage) AddPool(
 func (s *Storage) StorePools(
 	ctx c.Context,
 	where string,
-	pools []entities.TradePool,
+	pools []entities.Pool,
 ) (
 	err error,
 ) {
@@ -125,21 +117,51 @@ func (s *Storage) ListPools(
 	ctx c.Context,
 	where string,
 ) (
-	pools []entities.TradePool,
+	pools []entities.Pool,
 	err error,
 ) {
-	out, err := s.fst.Read(
+	err = s.fst.Read(
 		ctx,
 		where,
+		&pools,
 	)
+
+	return
+}
+
+func (s *Storage) RemovePool(
+	ctx c.Context,
+	where string,
+	pool entities.Pool,
+) (
+	err error,
+) {
+	b, err := json.Marshal(pool)
 	if err != nil {
 		return
 	}
 
-	err = json.Unmarshal(
-		out,
-		&pools,
-	)
+	err = s.fst.Remove(ctx, where, b)
+
+	return
+}
+
+func (s *Storage) RemovePools(
+	ctx c.Context,
+	where string,
+	pools []entities.Pool,
+) (
+	out []entities.Pool,
+	err error,
+) {
+	for _, pool := range pools {
+		err = s.RemovePool(ctx, where, pool)
+		if err != nil {
+			return
+		}
+	}
+
+	out, err = s.ListPools(ctx, where)
 
 	return
 }
@@ -173,6 +195,43 @@ func (s *Storage) AddToken(
 	return
 }
 
+func (s *Storage) RemoveToken(
+	ctx c.Context,
+	where string,
+	token entities.Token,
+) (
+	err error,
+) {
+	b, err := json.Marshal(token)
+	if err != nil {
+		return
+	}
+
+	err = s.fst.Remove(ctx, where, b)
+
+	return
+}
+
+func (s *Storage) RemoveTokens(
+	ctx c.Context,
+	where string,
+	tokens []entities.Token,
+) (
+	out []entities.Token,
+	err error,
+) {
+	for _, token := range tokens {
+		err = s.RemoveToken(ctx, where, token)
+		if err != nil {
+			return
+		}
+	}
+
+	out, err = s.ListTokens(ctx, where)
+
+	return
+}
+
 func (s *Storage) StoreTokens(
 	ctx c.Context,
 	where string,
@@ -201,12 +260,7 @@ func (s *Storage) ListTokens(
 	tokens []entities.Token,
 	err error,
 ) {
-	b, err := s.fst.Read(ctx, where)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(b, &tokens)
+	err = s.fst.Read(ctx, where, tokens)
 
 	return
 }

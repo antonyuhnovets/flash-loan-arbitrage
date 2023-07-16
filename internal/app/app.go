@@ -31,7 +31,7 @@ func Run(conf *config.Config) {
 
 	ctx := context.Background()
 
-	// ethereum client
+	// ethereum client setup
 	cl, err := ethereum.NewClient(
 		conf.Blockchain.Url,
 	)
@@ -39,21 +39,24 @@ func Run(conf *config.Config) {
 		fmt.Println(err)
 	}
 
-	// contract
+	// contract connect
 	cAdress := common.HexToAddress(
-		conf.Contract.Address,
+		conf.Blockchain.Contract.Address,
 	)
-	ctr, err := cl.DialContract(conf.Contract.Address)
+	ctr, err := cl.DialContract(cAdress.Hex())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// tradecase
+	// Tradecase
+
+	// contract instance
 	contract := contract.NewContract(
 		cAdress, ctr.(*api.Api),
 		make([]entities.TradePair, 0),
 	)
 
+	// provider create
 	provider, err := provider.NewTradeProvider(
 		ctx, conf.Blockchain.Url, os.Getenv("ACCOUNT_PRIVATE_KEY"),
 	)
@@ -61,51 +64,79 @@ func Run(conf *config.Config) {
 		log.Fatal(err)
 	}
 
-	files := map[string]string{
-		"pools":  "./storage_test/pools_test.json",
-		"tokens": "./storage_test/tokens_test.json",
-	}
-	repository, err := repo.NewStorage(files)
-	if err != nil {
-		log.Fatal(err)
+	// repository setup
+	var repository tradecase.Repository
+
+	switch conf.Storage.Type {
+	case "localfile":
+		files := map[string]string{
+			"pools": fmt.Sprintf(
+				"%s/pools.json",
+				conf.Storage.Localstorage.Path,
+			),
+			"tokens": fmt.Sprintf(
+				"%s/tokens.json",
+				conf.Storage.Localstorage.Path,
+			),
+		}
+		repository, err = repo.NewStorage(files)
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "database":
+		if conf.Storage.Database.Driver == "postgres" {
+			repository, err = repo.New(conf.Database)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 
+	// new tradecase
 	tc := tradecase.New(
 		repository,
 		provider,
 		contract,
 	)
 
-	tokenPair := entities.TokenPair{
-		Token0: entities.Token{
-			Name:    "WETH",
-			Address: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
-			WeiVal:  1000000000000000000,
-		},
-		Token1: entities.Token{
-			Name:    "LINK",
-			Address: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-			WeiVal:  1000000000000000000,
-		},
-	}
+	// store tokens
+	// tokenPair := entities.TokenPair{
+	// 	Token0: entities.Token{
+	// 		ID:      1,
+	// 		Name:    "WETH",
+	// 		Address: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+	// 		WeiVal:  1000000000000000000,
+	// 	},
+	// 	Token1: entities.Token{
+	// 		ID:      2,
+	// 		Name:    "LINK",
+	// 		Address: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
+	// 		WeiVal:  1000000000000000000,
+	// 	},
+	// }
 
-	tc.Repo.AddToken(ctx, "tokens", tokenPair.Token0)
-	tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
+	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token0)
+	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
 
-	err = tc.SetTokens(ctx, "tokens")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err = tc.SetTokens(ctx, "tokens")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	pairList := make([]entities.TokenPair, 0)
-	pairList = append(pairList, tokenPair)
+	// pairList := make([]entities.TokenPair, 0)
+	// pairList = append(pairList, tokenPair)
 
+	// Parsecase
+
+	// new parser with protocol
 	p := parser.NewParser(entities.SwapProtocol{
 		Name:       "Uniswap-V2",
 		Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
 		SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
 	})
 	// p["uniswap-v3"] = &parseUniV3
+
+	// parsecase create
 	pc := tradecase.NewParseCase(
 		repository,
 		p,
@@ -133,7 +164,7 @@ func Run(conf *config.Config) {
 		syscall.SIGTERM,
 	)
 
-	// run
+	// run server
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())

@@ -13,7 +13,7 @@ type listPairs struct {
 
 // @Description Request list of trading pools
 type listPools struct {
-	Pools []entities.TradePool `json:"pools"` // list of trade pools
+	Pools []entities.Pool `json:"pools" bson:"pools" gorm:"type:pools"` // list of trade pools
 } //@name ListPools
 
 // @Description Request list of tokens
@@ -53,10 +53,6 @@ func respondCreated(c *gin.Context, body interface{}) {
 func respondAccepted(c *gin.Context, body interface{}) {
 	c.JSON(202, body)
 }
-
-// func respondNoContent(c *gin.Context, body interface{}) {
-// 	c.JSON(204, body)
-// }
 
 // @Description Error response object
 type responseErr struct {

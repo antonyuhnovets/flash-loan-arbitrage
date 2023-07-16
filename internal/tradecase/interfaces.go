@@ -31,34 +31,54 @@ type TokenRepo interface {
 	GetTokenByAddress(
 		c.Context, string, string,
 	) (entities.Token, error)
+
+	RemoveToken(
+		c.Context, string, entities.Token,
+	) error
+
+	RemoveTokens(
+		c.Context, string, []entities.Token,
+	) ([]entities.Token, error)
 }
 
 type PoolRepo interface {
 	ListPools(
 		c.Context, string,
-	) ([]entities.TradePool, error)
+	) ([]entities.Pool, error)
 
 	StorePools(
-		c.Context, string, []entities.TradePool,
+		c.Context, string, []entities.Pool,
 	) error
 
 	AddPool(
-		c.Context, entities.TradePool, string,
+		c.Context, entities.Pool, string,
 	) error
 
 	GetByTokens(
 		c.Context, string, entities.TokenPair,
-	) ([]entities.TradePool, error)
+	) ([]entities.Pool, error)
+
+	RemovePool(
+		c.Context, string, entities.Pool,
+	) error
+
+	RemovePools(
+		c.Context, string, []entities.Pool,
+	) ([]entities.Pool, error)
 }
 
 type Storage interface {
 	Store(
-		c.Context, string, []byte,
+		c.Context, string, interface{},
 	) error
 
 	Read(
-		c.Context, string,
-	) ([]byte, error)
+		c.Context, string, interface{},
+	) error
+
+	Remove(
+		c.Context, string, interface{},
+	) error
 
 	Clear(
 		c.Context, string,
@@ -167,22 +187,22 @@ type Parser interface {
 
 type ParseStore interface {
 	AddPool(
-		entities.TradePool,
+		entities.Pool,
 	) error
 
 	RemovePool(
-		entities.TradePool,
+		entities.Pool,
 	) error
 
 	GetPairPools(
 		entities.TokenPair,
-	) ([]entities.TradePool, error)
+	) ([]entities.Pool, error)
 
 	AddPools(
-		[]entities.TradePool,
+		[]entities.Pool,
 	)
 
-	ListPools() []entities.TradePool
+	ListPools() []entities.Pool
 
 	Clear()
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func GetTradePairs(
-	tradeMap map[entities.TokenPair]map[string]entities.TradePool,
+	tradeMap map[entities.TokenPair]map[string]entities.Pool,
 ) (
 	tradePairs []entities.TradePair,
 	err error,
@@ -42,18 +42,18 @@ func GetTradePairs(
 }
 
 func GetTradeMap(
-	pools []entities.TradePool,
+	pools []entities.Pool,
 ) (
-	trade map[entities.TokenPair]map[string]entities.TradePool,
+	trade map[entities.TokenPair]map[string]entities.Pool,
 	err error,
 ) {
-	trade = make(map[entities.TokenPair]map[string]entities.TradePool)
+	trade = make(map[entities.TokenPair]map[string]entities.Pool)
 
 	for _, pool := range pools {
 		_, ok := trade[pool.Pair]
 		if !ok {
 			trade[pool.Pair] = make(
-				map[string]entities.TradePool,
+				map[string]entities.Pool,
 				0,
 			)
 		}
@@ -68,7 +68,7 @@ func GetTradeMap(
 }
 
 func SplitPoolsOnPairs(
-	pools map[string]entities.TradePool,
+	pools map[string]entities.Pool,
 ) (
 	pairs []entities.TradePair,
 ) {
@@ -126,7 +126,7 @@ func DeleteDublicates(
 }
 
 func MakeTradePair(
-	pools map[string]entities.TradePool,
+	pools map[string]entities.Pool,
 ) (
 	pair entities.TradePair,
 	err error,
@@ -214,6 +214,40 @@ func GetTokenFromPair(
 		token = &pair.Token1
 	default:
 		token = nil
+	}
+
+	return
+}
+
+func PoolContainPair(
+	pool entities.Pool,
+	pair entities.TokenPair,
+) (
+	ok bool,
+) {
+	if (pool.Pair.Token0 == pair.Token0 &&
+		pool.Pair.Token1 == pair.Token1) ||
+		(pool.Pair.Token0 == pair.Token1 &&
+			pool.Pair.Token1 == pair.Token0) {
+		ok = true
+
+		return
+	}
+	ok = false
+
+	return
+}
+
+func GetPoolsByPair(
+	pools []entities.Pool,
+	pair entities.TokenPair,
+) (
+	out []entities.Pool,
+) {
+	for _, pool := range pools {
+		if PoolContainPair(pool, pair) {
+			out = append(out, pool)
+		}
 	}
 
 	return

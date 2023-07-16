@@ -8,14 +8,14 @@ import (
 )
 
 type Parser struct {
-	Pools []entities.TradePool
+	Pools []entities.Pool
 }
 
 func New() *Parser {
-	return &Parser{make([]entities.TradePool, 0)}
+	return &Parser{make([]entities.Pool, 0)}
 }
 
-func (p *Parser) AddPool(pool entities.TradePool) error {
+func (p *Parser) AddPool(pool entities.Pool) error {
 	if _, ok := p.containPool(pool); ok {
 		return fmt.Errorf("pool already added")
 	}
@@ -24,7 +24,7 @@ func (p *Parser) AddPool(pool entities.TradePool) error {
 	return nil
 }
 
-func (p *Parser) RemovePool(pool entities.TradePool) error {
+func (p *Parser) RemovePool(pool entities.Pool) error {
 	index, ok := p.containPool(pool)
 	if !ok {
 		return fmt.Errorf("pool not found")
@@ -35,13 +35,13 @@ func (p *Parser) RemovePool(pool entities.TradePool) error {
 }
 
 func (p *Parser) Clear() {
-	p.Pools = make([]entities.TradePool, 0)
+	p.Pools = make([]entities.Pool, 0)
 }
 
 func (p *Parser) GetPairPools(
 	pair entities.TokenPair,
 ) (
-	pools []entities.TradePool,
+	pools []entities.Pool,
 	err error,
 ) {
 	index, ok := p.containPair(pair)
@@ -61,7 +61,7 @@ func (p *Parser) GetPairPools(
 }
 
 func (p *Parser) AddPools(
-	pools []entities.TradePool,
+	pools []entities.Pool,
 ) {
 	for _, pool := range pools {
 		err := p.AddPool(pool)
@@ -72,14 +72,14 @@ func (p *Parser) AddPools(
 }
 
 func (p *Parser) ListPools() (
-	listPools []entities.TradePool,
+	listPools []entities.Pool,
 ) {
 	listPools = p.Pools
 
 	return
 }
 
-func (p *Parser) containPool(pool entities.TradePool) (
+func (p *Parser) containPool(pool entities.Pool) (
 	index int,
 	ok bool,
 ) {

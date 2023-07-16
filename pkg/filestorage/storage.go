@@ -2,8 +2,11 @@ package Filestorage
 
 import (
 	c "context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 type FileStorage struct {
@@ -76,7 +79,7 @@ func (fs *FileStorage) NewFile(
 func (fs *FileStorage) Store(
 	ctx c.Context,
 	where string,
-	item []byte,
+	item interface{},
 ) (
 	err error,
 ) {
@@ -89,7 +92,7 @@ func (fs *FileStorage) Store(
 		return
 	}
 
-	n, err := f.Write(item)
+	n, err := f.Write(item.([]byte))
 	log.Println(n)
 
 	return
@@ -98,13 +101,27 @@ func (fs *FileStorage) Store(
 func (fs *FileStorage) Read(
 	ctx c.Context,
 	where string,
+	out interface{},
 ) (
-	b []byte,
 	err error,
 ) {
-	b, err = os.ReadFile(
+	b, err := os.ReadFile(
 		fs.Files[where],
 	)
+	if err != nil {
+		return
+	}
+	_, ok := out.(*[]byte)
+	if !ok {
+		err = json.Unmarshal(b, out)
+		if err != nil {
+
+			return
+		}
+	} else {
+		res := &b
+		out = res
+	}
 
 	return
 }
@@ -112,7 +129,7 @@ func (fs *FileStorage) Read(
 func (fs *FileStorage) ContinueFile(
 	ctx c.Context,
 	where string,
-	item []byte,
+	item interface{},
 ) (
 	err error,
 ) {
@@ -124,20 +141,70 @@ func (fs *FileStorage) ContinueFile(
 	if err != nil {
 		return
 	}
-	b, err := fs.Read(ctx, where)
+
+	b, err := os.ReadFile(fs.Files[where])
 	if err != nil {
+		log.Println(err)
+
 		return
 	}
 
+	if len(b) < 3 {
+		b = []byte("[\n]")
+	}
 	if string(b[len(b)-3]) != "[" {
 		b = append(b[:len(b)-2], []byte(",\n")...)
 	} else {
 		b = append(b[:len(b)-2], []byte("\n")...)
 	}
-	b = append(b, item...)
+
+	b = append(b, item.([]byte)...)
 
 	n, err := f.Write(b)
 	log.Println(n)
+
+	return
+}
+
+func (fs *FileStorage) Remove(
+	ctx c.Context,
+	where string,
+	item interface{},
+) (
+	err error,
+) {
+	f, err := os.OpenFile(
+		fs.Files[where],
+		os.O_RDWR,
+		0644,
+	)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	b := make([]byte, 0)
+
+	err = fs.Read(ctx, where, &b)
+	if err != nil {
+
+		return
+	}
+
+	before, after, ok := strings.Cut(string(b), string(item.([]byte)))
+	if !ok {
+		err = fmt.Errorf("item %b not found", item)
+
+		return
+	}
+
+	out := []byte(before[:len(before)-2] + after)
+
+	fs.Clear(ctx, where)
+
+	n, err := f.Write(out)
+
+	fmt.Println("written bytes ", n)
 
 	return
 }

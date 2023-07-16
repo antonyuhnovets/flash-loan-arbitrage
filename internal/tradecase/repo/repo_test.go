@@ -49,13 +49,13 @@ var storeOneTests = []storeTest{
 		unit: Token{
 			Name:    "testOneTokenName",
 			Address: "testOneTokenAddress",
-			WeiVal:  10000000000,
+			Wei:     10000000000,
 		},
 		expected: nil,
 	},
 	{
 		where: "pools",
-		unit: TradePool{
+		unit: Pool{
 			Address: "testOnePoolAddress",
 			Pair: TokenPair{
 				Token0: Token{Address: "testOnePairAddress0"},
@@ -84,7 +84,7 @@ func TestStoreOne(t *testing.T) {
 					)
 				}
 			case "pools":
-				err := s.AddPool(ctx, el.unit.(TradePool), el.where)
+				err := s.AddPool(ctx, el.unit.(Pool), el.where)
 				if err == el.expected {
 					continue
 				} else {
@@ -113,20 +113,22 @@ var storeManyTests = []storeTest{
 		where: "tokens",
 		unit: []Token{
 			{
+				ID:      1,
 				Name:    "testManyTokenName0",
 				Address: "testManyTokenAddress0",
-				WeiVal:  10000000000,
+				Wei:     10000000000,
 			}, {
+				ID:      2,
 				Name:    "testManyTokenName1",
 				Address: "testManyTokenAddress1",
-				WeiVal:  10000000000,
+				Wei:     10000000000,
 			},
 		},
 		expected: nil,
 	},
 	{
 		where: "pools",
-		unit: []TradePool{
+		unit: []Pool{
 			{
 				Address: "testManyPoolAddress0",
 				Pair: TokenPair{
@@ -165,7 +167,7 @@ func TestStoreMany(t *testing.T) {
 					)
 				}
 			case "pools":
-				err := s.StorePools(ctx, el.where, el.unit.([]TradePool))
+				err := s.StorePools(ctx, el.where, el.unit.([]Pool))
 				if err == el.expected {
 					continue
 				} else {
@@ -290,7 +292,8 @@ func TestGetAll(t *testing.T) {
 					)
 				}
 			default:
-				lst, err := s.GetStorage().Read(ctx, el.where)
+				lst := []Pool{}
+				err := s.GetStorage().Read(ctx, el.where, lst)
 				if &lst == el.expected || err == el.expected {
 					continue
 				} else {

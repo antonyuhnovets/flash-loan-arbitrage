@@ -73,7 +73,7 @@ func (pc *ParseCase) ParsePairs(
 func (pc *ParseCase) GetPools(
 	ctx context.Context,
 ) (
-	pools []entities.TradePool,
+	pools []entities.Pool,
 	err error,
 ) {
 	pools = pc.Parser.ListPools()
@@ -133,12 +133,3 @@ func (pc *ParseCase) Clear(
 ) {
 	pc.Parser.Clear()
 }
-
-// func (pc ParseCase) ClearAll(
-// 	ctx context.Context,
-// ) {
-// 	for _, v := range pc.Parsers {
-// 		v.Clear()
-// 	}
-// 	pc.Clear(ctx)
-// }
