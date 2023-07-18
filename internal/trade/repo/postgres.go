@@ -6,7 +6,7 @@ import (
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/postgres"
 )
 
@@ -42,7 +42,7 @@ func New(conf config.Database) (
 	return
 }
 
-func (pr *PostgresRepo) GetStorage() tradecase.Storage {
+func (pr *PostgresRepo) GetStorage() trade.Storage {
 	return pr.ps
 }
 

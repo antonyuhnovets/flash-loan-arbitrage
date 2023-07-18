@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 	fs "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/filestorage"
 )
 
@@ -30,7 +30,7 @@ func NewStorage(files map[string]string) (
 	return
 }
 
-func (s *Storage) GetStorage() tradecase.Storage {
+func (s *Storage) GetStorage() trade.Storage {
 	return s.fst
 }
 

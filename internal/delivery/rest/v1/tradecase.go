@@ -2,19 +2,18 @@ package v1
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	tc "github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 
 	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	log "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
 type tradecaseRoutes struct {
-	t tc.TradeCase
+	t trade.TradeCase
 	l log.Interface
 }
 
@@ -216,7 +215,7 @@ func (tr *tradecaseRoutes) ListTokens(
 func (tr *tradecaseRoutes) GetBaseTokens(
 	c *gin.Context,
 ) {
-	tokens, err := tr.t.Contract.API().GetBaseTokens(
+	tokens, err := tr.t.Contract.Api().Caller().GetBaseTokens(
 		eth.CallOpts(),
 	)
 	if err != nil {
@@ -289,8 +288,6 @@ func (tr *tradecaseRoutes) RmBase(
 	defer cancel()
 
 	addr := c.Query("token")
-
-	fmt.Println(addr)
 
 	tx, err := tr.t.RmBaseToken(
 		ctx,
@@ -402,7 +399,7 @@ func (tr *tradecaseRoutes) Withdraw(
 
 func NewTradecaseRouter(
 	h *gin.RouterGroup,
-	t tc.TradeCase,
+	t trade.TradeCase,
 	l log.Interface,
 ) {
 	routes := &tradecaseRoutes{t, l}

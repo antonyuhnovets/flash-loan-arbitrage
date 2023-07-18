@@ -1,4 +1,4 @@
-package tradecase
+package trade
 
 import (
 	"context"

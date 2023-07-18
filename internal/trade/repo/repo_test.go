@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	. "github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	t "github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	t "github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 )
 
 var basePath, _ = os.Getwd()

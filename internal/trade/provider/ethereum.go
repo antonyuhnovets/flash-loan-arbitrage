@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
 
 	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 )
@@ -50,7 +49,7 @@ func NewTradeProvider(
 }
 
 func (tp *TradeProvider) GetClient(ctx c.Context) (
-	cl tradecase.Client,
+	cl interface{},
 ) {
 	cl = tp.Client
 

@@ -10,18 +10,16 @@ import (
 	"os/exec"
 	"os/signal"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 	v1 "github.com/antonyuhnovets/flash-loan-arbitrage/internal/delivery/rest/v1"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/parser"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/provider"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/repo"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/contract"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/parser"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/provider"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/repo"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/httpserver"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
@@ -40,10 +38,10 @@ func Run(conf *config.Config) {
 	}
 
 	// contract connect
-	cAdress := common.HexToAddress(
-		conf.Blockchain.Contract.Address,
-	)
-	ctr, err := cl.DialContract(cAdress.Hex())
+	// cAdress := common.HexToAddress(
+	// 	conf.Blockchain.Contract.Address,
+	// )
+	cont, err := contract.New(conf.Blockchain.Contract.Address, cl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,11 +49,10 @@ func Run(conf *config.Config) {
 	// Tradecase
 
 	// contract instance
-	contract := contract.NewContract(
-		cAdress, ctr.(*api.Api),
+	ctr := contract.NewFlashArbContract(
+		cont,
 		make([]entities.TradePair, 0),
 	)
-
 	// provider create
 	provider, err := provider.NewTradeProvider(
 		ctx, conf.Blockchain.Url, os.Getenv("ACCOUNT_PRIVATE_KEY"),
@@ -65,7 +62,7 @@ func Run(conf *config.Config) {
 	}
 
 	// repository setup
-	var repository tradecase.Repository
+	var repository trade.Repository
 
 	switch conf.Storage.Type {
 	case "localfile":
@@ -93,10 +90,10 @@ func Run(conf *config.Config) {
 	}
 
 	// new tradecase
-	tc := tradecase.New(
+	tc := trade.New(
 		repository,
 		provider,
-		contract,
+		ctr,
 	)
 
 	// store tokens
@@ -137,7 +134,7 @@ func Run(conf *config.Config) {
 	// p["uniswap-v3"] = &parseUniV3
 
 	// parsecase create
-	pc := tradecase.NewParseCase(
+	pc := trade.NewParseCase(
 		repository,
 		p,
 	)

@@ -1,10 +1,10 @@
-package tradecase
+package trade
 
 import (
 	c "context"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/contract"
 )
 
 type Repository interface {
@@ -92,34 +92,14 @@ type Storage interface {
 type TradeProvider interface {
 	ClientManager
 
-	ProviderStore
+	ProviderStorage
 }
 
 type ClientManager interface {
-	GetClient(c.Context) Client
+	GetClient(c.Context) interface{}
 }
 
-type Client interface {
-	Setup(c.Context, interface{}) error
-
-	ClientGet() interface{}
-
-	UseWallet(interface{})
-
-	GetBallance(c.Context) (int, error)
-
-	GetChainID(c.Context) interface{}
-
-	DialContract(string) (interface{}, error)
-
-	GetNextTransaction(c.Context) (interface{}, error)
-
-	UpdateChainID(c.Context) error
-
-	Transact(c.Context, interface{}) (interface{}, error)
-}
-
-type ProviderStore interface {
+type ProviderStorage interface {
 	AddToken(
 		c.Context, entities.Token,
 	) error
@@ -144,12 +124,13 @@ type ProviderStore interface {
 }
 
 type SmartContract interface {
-	ContractPairs
-	ContractAPI
-	Trade() contract.Trade
+	ContractStorage
+
+	contract.Api
+	// Trade() contract.Trade
 }
 
-type ContractPairs interface {
+type ContractStorage interface {
 	AddPair(
 		c.Context, entities.TradePair,
 	) error
@@ -175,13 +156,11 @@ type ContractPairs interface {
 	ClearPairs(c.Context)
 }
 
-type ContractAPI interface {
-	contract.API
-}
-
 type Parser interface {
 	Parse([]entities.TokenPair) error
+
 	ParseStore
+
 	ParseProtocol
 }
 
@@ -209,6 +188,8 @@ type ParseStore interface {
 
 type ParseProtocol interface {
 	SetProtocol(entities.SwapProtocol)
+
 	GetProtocol() entities.SwapProtocol
+
 	GetPoolAddress(entities.TokenPair) (string, error)
 }

@@ -4,12 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	tc "github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 	log "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
 type parsecaseRoutes struct {
-	pc tc.ParseCase
+	pc trade.ParseCase
 	l  log.Interface
 }
 
@@ -313,7 +313,7 @@ func (pr *parsecaseRoutes) ReadParsed(
 
 func NewParsecaseRouter(
 	h *gin.RouterGroup,
-	t tc.ParseCase,
+	t trade.ParseCase,
 	l log.Interface,
 ) {
 	routes := &parsecaseRoutes{t, l}

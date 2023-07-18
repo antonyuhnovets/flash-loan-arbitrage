@@ -1,13 +1,13 @@
-package tradecase
+package trade
 
 import (
 	"context"
 	"fmt"
 	"log"
 
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/trade"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/pairs"
 )
 
 type TradeCase struct {
@@ -84,25 +84,24 @@ func (tc *TradeCase) SetProfitablePairs(
 		return
 	}
 
-	tradeMap, err := trade.GetTradeMap(
+	tradeMap, err := pairs.GetTradeMap(
 		pools,
 	)
 	if err != nil {
 		return
 	}
 
-	tradePairs, err := trade.GetTradePairs(
+	tradePairs, err := pairs.GetTradePairs(
 		tradeMap,
 	)
 	if err != nil {
 		return
 	}
 
-	prof, err := tc.Contract.Trade().GetProfitable(
-		ctx,
+	prof, ok, err := tc.GetProfitable(
 		tradePairs,
 	)
-	if err != nil {
+	if err != nil || !ok {
 		return
 	}
 
@@ -117,6 +116,30 @@ func (tc *TradeCase) SetProfitablePairs(
 	return
 }
 
+func (tc *TradeCase) GetProfitable(from []entities.TradePair) (
+	out []entities.TradePair,
+	ok bool,
+	err error,
+) {
+	ok = false
+	for _, pair := range from {
+		res, _err := tc.Contract.Api().Caller().GetProfit(
+			eth.CallOpts(),
+			eth.ToAddress(pair.Pool0.Address),
+			eth.ToAddress(pair.Pool1.Address),
+		)
+		if err != nil {
+			err = _err
+			return
+		}
+		if int(res.Profit.Int64()) > 0 {
+			out = append(out, pair)
+			ok = true
+		}
+	}
+	return
+}
+
 func (tc *TradeCase) Withdraw(
 	ctx context.Context,
 ) (
@@ -127,8 +150,8 @@ func (tc *TradeCase) Withdraw(
 	c, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// auth := tc.Provider.GetClient(ctx).(*eth.Client)
-	auth := tc.Provider.GetClient(ctx)
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	// auth := tc.Provider.GetClient(ctx)
 
 	b, err := auth.GetNextTransaction(c)
 	if err != nil {
@@ -137,7 +160,7 @@ func (tc *TradeCase) Withdraw(
 		return
 	}
 
-	t, err := tc.Contract.API().Withdraw(b.(*bind.TransactOpts))
+	t, err := tc.Contract.Api().Transactor().Withdraw(b)
 	if err != nil {
 		log.Println(err)
 
@@ -161,11 +184,11 @@ func (tc *TradeCase) AddBaseToken(
 	tx interface{},
 	err error,
 ) {
-	c, cancel := context.WithCancel(ctx)
-	defer cancel()
+	// c, cancel := context.WithCancel(ctx)
+	// defer cancel()
 
-	ok, err := tc.Contract.API().BaseTokensContains(
-		eth.CallOpts(c),
+	ok, err := tc.Contract.Api().Caller().BaseTokensContains(
+		eth.CallOpts(ctx),
 		eth.ToAddress(address),
 	)
 	if err != nil {
@@ -177,17 +200,17 @@ func (tc *TradeCase) AddBaseToken(
 	}
 	log.Println("sending tx")
 
-	// auth := tc.Provider.GetClient(c).(*eth.Client)
-	auth := tc.Provider.GetClient(c)
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	// auth := tc.Provider.GetClient(c)
 
-	b, err := auth.GetNextTransaction(c)
+	b, err := auth.GetNextTransaction(ctx)
 	if err != nil {
 
 		return
 	}
 
-	t, err := tc.Contract.API().AddBaseToken(
-		b.(*bind.TransactOpts), eth.ToAddress(address),
+	t, err := tc.Contract.Api().Transactor().AddBaseToken(
+		b, eth.ToAddress(address),
 	)
 	if err != nil {
 		log.Println(err)
@@ -195,12 +218,16 @@ func (tc *TradeCase) AddBaseToken(
 		return
 	}
 
-	tx, err = auth.Transact(c, t)
-	if err != nil {
-		log.Println(err)
+	// r, err := bind.WaitMined(c, auth.Client, t)
 
+	// fmt.Println(r)
+
+	tx, isPending, err := auth.Client.TransactionByHash(ctx, t.Hash())
+	if err != nil {
 		return
 	}
+
+	fmt.Println(isPending)
 
 	return
 }
@@ -212,48 +239,53 @@ func (tc *TradeCase) RmBaseToken(
 	tx interface{},
 	err error,
 ) {
-	c, cancel := context.WithCancel(ctx)
-	defer cancel()
+	// c, cancel := context.WithCancel(ctx)
+	// defer cancel()
 
-	ok, err := tc.Contract.API().BaseTokensContains(
-		eth.CallOpts(c),
+	ok, err := tc.Contract.Api().Caller().BaseTokensContains(
+		eth.CallOpts(ctx),
 		eth.ToAddress(address),
 	)
 	if err != nil {
 		return
 	}
 	if !ok {
+		tx = nil
 		err = fmt.Errorf("token %v not found", address)
 
 		return
 	}
+
 	log.Println("sending tx")
 
-	// auth := tc.Provider.GetClient(c).(*eth.Client)
-	auth := tc.Provider.GetClient(c)
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	// auth := tc.Provider.GetClient(c)
 
-	b, err := auth.GetNextTransaction(c)
+	b, _err := auth.GetNextTransaction(ctx)
 	if err != nil {
 		log.Println(err)
+		err = _err
 
 		return
 	}
 
-	t, err := tc.Contract.API().RemoveBaseToken(
-		b.(*bind.TransactOpts), eth.ToAddress(address),
+	t, _err := tc.Contract.Api().Transactor().RemoveBaseToken(
+		b, eth.ToAddress(address),
 	)
-	if err != nil {
-		log.Println(err)
+	if _err != nil {
+		err = _err
 
 		return
 	}
 
-	tx, err = auth.Transact(c, t)
+	tx, isPending, _err := auth.Client.TransactionByHash(ctx, t.Hash())
 	if err != nil {
-		log.Println(err)
+		err = _err
 
 		return
 	}
+
+	fmt.Println(isPending)
 
 	return
 }

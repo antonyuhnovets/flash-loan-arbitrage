@@ -8,10 +8,29 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// func SignTransactAndSend(c context.Context, tx *types.Transaction) {
+// 	ctx, cancel := context.WithCancel(c)
+// 	defer cancel()
+
+// 	bind.NewTransactorWithChainID()
+// }
+
+func Logs() types.Log {
+	return types.Log{}
+}
 func ToAddress(s string) common.Address {
 	return common.HexToAddress(s)
+}
+
+func ListAddress(addrs ...common.Address) (
+	out []common.Address,
+) {
+	out = append(out, addrs...)
+
+	return
 }
 
 func FromAddress(a common.Address) string {

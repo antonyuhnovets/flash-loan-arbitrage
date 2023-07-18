@@ -11,7 +11,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
 )
 
@@ -25,8 +25,8 @@ import (
 func NewRouter(
 	h *gin.Engine,
 	l logger.Interface,
-	t tradecase.TradeCase,
-	p tradecase.ParseCase,
+	t trade.TradeCase,
+	p trade.ParseCase,
 ) {
 	// Options
 	h.Use(gin.Logger())
