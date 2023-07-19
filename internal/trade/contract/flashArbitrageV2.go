@@ -9,8 +9,7 @@ import (
 )
 
 type FlashArbContract struct {
-	api *Contract
-	// trade      Trade
+	api        *Contract
 	tradePairs []entities.TradePair
 }
 
@@ -22,8 +21,7 @@ func NewFlashArbContract(
 ) {
 
 	contract = &FlashArbContract{
-		api: api,
-		// trade:      TradeApi(a),
+		api:        api,
 		tradePairs: pairs,
 	}
 
@@ -45,14 +43,6 @@ func (fc *FlashArbContract) Address() (
 
 	return
 }
-
-// func (fc *FlashArbContract) Trade() (
-// 	out Trade,
-// ) {
-// 	out = fc.trade
-
-// 	return
-// }
 
 func (fc *FlashArbContract) AddPair(
 	ctx c.Context,

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
@@ -9,48 +10,58 @@ import (
 
 type Parser struct {
 	*prs.Parser
-	*prs.Protocol
+	*prs.ProtocolManager
 }
 
-func NewParser(sp entities.SwapProtocol) (
+func NewParser() (
 	p *Parser,
 ) {
 	return &Parser{
 		prs.New(),
-		prs.NewProtocol(sp, NewProtoResolver()),
+		prs.NewManager(NewProtoResolver()),
 	}
-}
-
-func (p *Parser) SetProtocol(sp entities.SwapProtocol) {
-	p.Protocol.SetProtocol(sp)
 }
 
 func (p *Parser) Parse(pairs []entities.TokenPair) (
 	err error,
 ) {
 	for _, pair := range pairs {
-		addr, e := p.Protocol.GetPoolAddress(pair)
+		m, _err := p.GetPoolAddresses(pair)
 		if err != nil {
-			err = e
+			err = _err
 
 			return
 		}
-		p.Parser.AddPool(entities.Pool{
-			Protocol: p.Protocol.GetProtocol(),
-			Address:  addr,
-			Pair:     pair,
-		})
+		for proto, addr := range m {
+			if !p.containPool(addr) {
+				p.AddPool(entities.Pool{
+					Protocol: proto,
+					Address:  addr,
+					Pair:     pair,
+				},
+				)
+			}
+		}
 	}
 	return
 }
 
-type protocols struct {
-	uni2   prs.UniV2
-	uni3   prs.UniV3
-	sushi2 prs.SushiV2
+func (p *Parser) containPool(addr string) bool {
+	for _, pool := range p.ListPools() {
+		if pool.Address == addr {
+			return true
+		}
+	}
+	return false
 }
 
-func NewProtoResolver() *protocols {
+type Protocols struct {
+	uni2   *prs.UniV2
+	uni3   *prs.UniV3
+	sushi2 *prs.SushiV2
+}
+
+func NewProtoResolver() *Protocols {
 	u2 := entities.SwapProtocol{
 		Name:       "Uniswap-V2",
 		Factory:    os.Getenv("UNI_V2_FACTORY_ADDRESS"),
@@ -58,6 +69,7 @@ func NewProtoResolver() *protocols {
 	}
 
 	s2 := entities.SwapProtocol{
+		ID:         1,
 		Name:       "Sushiswap-V2",
 		Factory:    os.Getenv("SUSHI_V2_FACTORY_ADDRESS"),
 		SwapRouter: os.Getenv("SUSHI_V2_SWAP_ROUTER_ADDRESS"),
@@ -69,23 +81,28 @@ func NewProtoResolver() *protocols {
 		SwapRouter: os.Getenv("UNI_V3_SWAP_ROUTER_ADDRESS"),
 	}
 
-	return &protocols{
-		uni2:   prs.UniV2{Sp: u2},
-		uni3:   prs.UniV3{Sp: u3},
-		sushi2: prs.SushiV2{Sp: s2},
+	return &Protocols{
+		uni2:   &prs.UniV2{SwapProtocol: u2},
+		uni3:   &prs.UniV3{SwapProtocol: u3},
+		sushi2: &prs.SushiV2{SwapProtocol: s2},
 	}
 }
 
-func (proto *protocols) Resolve(sp entities.SwapProtocol) (
+func (proto *Protocols) Resolve(sp *prs.Protocol) (
 	pp prs.ProtocolParser,
+	err error,
 ) {
-	switch sp {
-	case proto.uni2.Sp:
+	switch sp.GetProtocolData() {
+	case proto.uni2.SwapProtocol:
 		pp = proto.uni2
-	case proto.uni3.Sp:
+	case proto.uni3.SwapProtocol:
 		pp = proto.uni3
-	case proto.sushi2.Sp:
+	case proto.sushi2.SwapProtocol:
 		pp = proto.sushi2
+	}
+
+	if pp == nil {
+		err = fmt.Errorf("protocol %s not found in resolver", sp.Name)
 	}
 
 	return

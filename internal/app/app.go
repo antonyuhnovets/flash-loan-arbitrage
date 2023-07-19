@@ -96,42 +96,25 @@ func Run(conf *config.Config) {
 		ctr,
 	)
 
-	// store tokens
-	// tokenPair := entities.TokenPair{
-	// 	Token0: entities.Token{
-	// 		ID:      1,
-	// 		Name:    "WETH",
-	// 		Address: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
-	// 		WeiVal:  1000000000000000000,
-	// 	},
-	// 	Token1: entities.Token{
-	// 		ID:      2,
-	// 		Name:    "LINK",
-	// 		Address: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-	// 		WeiVal:  1000000000000000000,
-	// 	},
-	// }
-
-	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token0)
-	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
-
-	// err = tc.SetTokens(ctx, "tokens")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// pairList := make([]entities.TokenPair, 0)
-	// pairList = append(pairList, tokenPair)
-
 	// Parsecase
 
 	// new parser with protocol
-	p := parser.NewParser(entities.SwapProtocol{
+	p := parser.NewParser()
+	p.AddProtocol(entities.SwapProtocol{
 		Name:       "Uniswap-V2",
 		Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
 		SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
 	})
-	// p["uniswap-v3"] = &parseUniV3
+	p.AddProtocol(entities.SwapProtocol{
+		ID:         1,
+		Name:       "Sushiswap-V2",
+		Factory:    "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
+		SwapRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+	})
+
+	// name: "Uniswap-V3"
+	// factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+	// router: "0xE592427A0AEce92De3Edee1F18E0157C05861564"
 
 	// parsecase create
 	pc := trade.NewParseCase(

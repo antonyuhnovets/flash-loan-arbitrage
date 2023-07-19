@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
@@ -16,7 +18,7 @@ type parsecaseRoutes struct {
 // @Summary     Add Tokens
 // @Description Add list of tokens to storage
 // @ID          storeTokens
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: tokens
 // @Accept      json
 // @Produce     json
 // @Param       request body listTokens true "Add tokens"
@@ -63,11 +65,10 @@ func (pr *parsecaseRoutes) AddTokens(
 // @Summary     Get Tokens
 // @Description Get list of all tokens from storage
 // @ID          getTokensList
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: tokens
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listTokens
-// @Failure     409 {object} responseErr
 // @Failure     507 {object} responseErr
 // @Router      /storage/tokens [get]
 func (pr *parsecaseRoutes) ListTokens(
@@ -98,7 +99,7 @@ func (pr *parsecaseRoutes) ListTokens(
 // @Summary     Delete Tokens
 // @Description Delete tokens from storage
 // @ID          deleteTokens
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: tokens
 // @Accept      json
 // @Produce     json
 // @Param       request body listTokens true "Delete tokens"
@@ -150,7 +151,7 @@ func (pr *parsecaseRoutes) DeleteTokens(
 // @Summary     Add Pools
 // @Description Add list of pools to storage
 // @ID          addPools
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: pools
 // @Accept      json
 // @Produce     json
 // @Param       request body listPools true "Add pools"
@@ -197,19 +198,15 @@ func (pr *parsecaseRoutes) AddPools(
 // @Summary     Get Pools
 // @Description Get list of all pools from storage
 // @ID          getPoolList
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: pools
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listPools
-// @Failure     409 {object} responseErr
 // @Failure     507 {object} responseErr
 // @Router      /storage/pools [get]
 func (pr *parsecaseRoutes) ListPools(
 	c *gin.Context,
 ) {
-	// res := listPools{
-	// 	Pools: make([]entities.TradePool, 0),
-	// }
 
 	out, err := pr.pc.Repository.ListPools(c, "pools")
 	if err != nil {
@@ -223,7 +220,6 @@ func (pr *parsecaseRoutes) ListPools(
 		)
 		return
 	}
-	// res.Pools = out
 
 	respondOk(c, listPools{Pools: out})
 }
@@ -231,7 +227,7 @@ func (pr *parsecaseRoutes) ListPools(
 // @Summary     Delete Pools
 // @Description Delete pools from storage
 // @ID          deletePools
-// @Tags  	    parsecase, tradecase
+// @Tags  	    Storage: pools
 // @Accept      json
 // @Produce     json
 // @Param       request body listPools true "Delete pools"
@@ -280,26 +276,45 @@ func (pr *parsecaseRoutes) DeletePools(
 	respondOk(c, res)
 }
 
-// @Summary     Store parsed pools
-// @Description Save pools from parser to storage
-// @ID          ParseWrite
-// @Tags  	    parse
+// @Summary     Get parsed pools
+// @Description Get pools from current parser
+// @ID          getParsed
+// @Tags  	    Parse: setup parser
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listPools
-// @Failure     507 {object} responseErr
+// @Failure     500 {object} responseErr
 // @Router      /parser/pools [get]
 func (pr *parsecaseRoutes) ReadParsed(
 	c *gin.Context,
 ) {
+	pools := listPools{
+		Pools: pr.pc.Parser.ListPools(),
+	}
+
+	respondOk(c, pools)
+}
+
+// @Summary     Store parsed pools
+// @Description Save pools from parser to storage
+// @ID          ParseWrite
+// @Tags  	    Parse: core
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPools
+// @Failure     507 {object} responseErr
+// @Router      /parser/core/parse-save [get]
+func (pr *parsecaseRoutes) StoreParsed(
+	c *gin.Context,
+) {
 	err := pr.pc.ParseAndStore(c)
 	if err != nil {
-		errorConflict(
+		errorInufficientStorage(
 			c, err.Error(),
 			Log(
 				pr.l.Error,
 				err,
-				"rest - v1 - ReadParsed",
+				"rest - v1 - StoreParsed",
 			),
 		)
 	}
@@ -307,8 +322,143 @@ func (pr *parsecaseRoutes) ReadParsed(
 	pools := listPools{
 		Pools: pr.pc.Parser.ListPools(),
 	}
-	respondOk(c, pools)
 
+	respondOk(c, pools)
+}
+
+// @Summary     Parse
+// @Description Parse and store to parser local memory
+// @ID          parse
+// @Tags  	    Parse: core
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPools
+// @Failure     500 {object} responseErr
+// @Router      /parser/core/parse [get]
+func (pr *parsecaseRoutes) Parse(
+	c *gin.Context,
+) {
+	pools, err := pr.pc.JustParse(c)
+	if err != nil {
+		errorInternalServer(
+			c, err.Error(),
+			Log(
+				pr.l.Error,
+				err,
+				"rest - v1 - Parse",
+			),
+		)
+	}
+
+	respondOk(c, listPools{pools})
+}
+
+// @Summary     Add protocols
+// @Description Add parse protocols
+// @ID          addProtocols
+// @Tags  	    Parse: setup parser
+// @Accept      json
+// @Produce     json
+// @Param       request body listProtocols true "Set protocol"
+// @Success     200 {object} listProtocols
+// @Failure     400 {object} responseErr
+// @Failure     502 {object} responseErr
+// @Router      /parser/protocols [post]
+func (pr *parsecaseRoutes) AddProtocols(
+	c *gin.Context,
+) {
+	protocols := listProtocols{}
+
+	err := c.Bind(&protocols)
+	if err != nil {
+		errorBadRequest(
+			c, err.Error(),
+			Log(
+				pr.l.Error,
+				err,
+				"rest - v1 - AddProtocol",
+			),
+		)
+	}
+
+	for _, p := range protocols.Protocols {
+		err = pr.pc.AddProtocol(context.Background(), p)
+		if err != nil {
+			errorBadGateway(
+				c, err.Error(),
+				Log(
+					pr.l.Error,
+					err,
+					"rest - v1 - AddProtocol",
+				),
+			)
+		}
+	}
+
+	respondOk(c, protocols)
+
+}
+
+// @Summary     Get protocols
+// @Description Get current parse protocols
+// @ID          getProtocols
+// @Tags  	    Parse: setup parser
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listProtocols
+// @Failure     500 {object} responseErr
+// @Router      /parser/protocols [get]
+func (pr *parsecaseRoutes) GetProtocols(
+	c *gin.Context,
+) {
+	p := pr.pc.ListProtocols()
+
+	respondOk(c, p)
+}
+
+// @Summary     Remove protocols
+// @Description Remove parse protocols
+// @ID          rmProtocols
+// @Tags  	    Parse: setup parser
+// @Accept      json
+// @Produce     json
+// @Param       request body listProtocols true "Remove protocols"
+// @Success     202 {object} listProtocols
+// @Failure     400 {object} responseErr
+// @Failure     404 {object} responseErr
+// @Router      /parser/protocols [delete]
+func (pr *parsecaseRoutes) RmProtocols(
+	c *gin.Context,
+) {
+	l := listProtocols{}
+
+	err := c.Bind(&l)
+	if err != nil {
+		errorBadRequest(
+			c, err.Error(),
+			Log(
+				pr.l.Error,
+				err,
+				"rest - v1 - RmProtocol",
+			),
+		)
+	}
+
+	for _, proto := range l.Protocols {
+		err = pr.pc.RmProtocol(context.Background(), proto)
+		if err != nil {
+			errorNotFound(
+				c, err.Error(),
+				Log(
+					pr.l.Error,
+					err,
+					"rest - v1 - AddProtocol",
+				),
+			)
+		}
+	}
+
+	respondAccepted(c, l)
 }
 
 func NewParsecaseRouter(
@@ -364,6 +514,26 @@ func NewParserRouter(
 		handler.GET(
 			"/pools",
 			pr.ReadParsed,
+		)
+		handler.GET(
+			"/core/parse-save",
+			pr.StoreParsed,
+		)
+		handler.GET(
+			"/core/parse",
+			pr.Parse,
+		)
+		handler.POST(
+			"/protocols",
+			pr.AddProtocols,
+		)
+		handler.GET(
+			"/protocols",
+			pr.GetProtocols,
+		)
+		handler.DELETE(
+			"/protocols",
+			pr.RmProtocols,
 		)
 	}
 }

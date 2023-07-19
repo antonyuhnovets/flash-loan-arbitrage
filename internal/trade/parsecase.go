@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/pairs"
 )
 
 type ParseCase struct {
@@ -24,13 +25,44 @@ func NewParseCase(
 	return
 }
 
-func (pc *ParseCase) SwitchProtocol(
+func (pc *ParseCase) AddProtocol(
 	ctx context.Context,
 	sp entities.SwapProtocol,
 ) (
 	err error,
 ) {
-	pc.Parser.SetProtocol(sp)
+	err = pc.Parser.AddProtocol(sp)
+
+	return
+}
+
+func (pc *ParseCase) RmProtocol(
+	ctx context.Context,
+	sp entities.SwapProtocol,
+) (
+	err error,
+) {
+	err = pc.RemoveProtocol(sp)
+
+	return
+}
+
+func (pc *ParseCase) JustParse(
+	ctx context.Context,
+) (
+	pools []entities.Pool,
+	err error,
+) {
+	pairs, err := pc.GetPairs(ctx)
+	if err != nil {
+		return
+	}
+	err = pc.ParsePairs(ctx, pairs)
+	if err != nil {
+		return
+	}
+
+	pools = pc.Parser.ListPools()
 
 	return
 }
@@ -85,7 +117,7 @@ func (pc *ParseCase) GetPools(
 func (pc *ParseCase) GetPairs(
 	ctx context.Context,
 ) (
-	pairs []entities.TokenPair,
+	p []entities.TokenPair,
 	err error,
 ) {
 	tokens, err := pc.Repository.ListTokens(
@@ -96,34 +128,7 @@ func (pc *ParseCase) GetPairs(
 		return
 	}
 
-	m := make(
-		map[entities.Token]entities.TokenPair,
-	)
-	n := make(
-		map[entities.TokenPair]int,
-	)
-
-	for index, token := range tokens {
-		if _, ok := m[token]; !ok {
-			for _, t := range tokens {
-				if t != token {
-
-					m[token] = entities.TokenPair{
-						Token0: token,
-						Token1: t,
-					}
-
-					n[m[token]] = index
-				}
-			}
-		}
-
-		continue
-	}
-
-	for k := range n {
-		pairs = append(pairs, k)
-	}
+	p = pairs.PairsFromTokens(tokens)
 
 	return
 }

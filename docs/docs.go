@@ -29,7 +29,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tradecase"
+                    "Contract: pairs"
                 ],
                 "summary": "List Pairs",
                 "operationId": "listPairs",
@@ -38,18 +38,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/ListPairs"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -63,7 +51,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tradecase"
+                    "Contract: pairs"
                 ],
                 "summary": "Add Pairs",
                 "operationId": "addPairs",
@@ -85,8 +73,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/ListPairs"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -104,7 +92,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tradecase"
+                    "Contract: pairs"
                 ],
                 "summary": "Get Pairs",
                 "operationId": "getPairs",
@@ -151,7 +139,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: base tokens"
                 ],
                 "summary": "List base Tokens",
                 "operationId": "getTokens",
@@ -162,8 +150,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/TokenList"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -171,7 +159,37 @@ const docTemplate = `{
                 }
             }
         },
-        "/parser/pools": {
+        "/parser/core/parse": {
+            "get": {
+                "description": "Parse and store to parser local memory",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse: core"
+                ],
+                "summary": "Parse",
+                "operationId": "parse",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/parser/core/parse-save": {
             "get": {
                 "description": "Save pools from parser to storage",
                 "consumes": [
@@ -181,7 +199,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parse"
+                    "Parse: core"
                 ],
                 "summary": "Store parsed pools",
                 "operationId": "ParseWrite",
@@ -201,6 +219,156 @@ const docTemplate = `{
                 }
             }
         },
+        "/parser/pools": {
+            "get": {
+                "description": "Get pools from current parser",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse: setup parser"
+                ],
+                "summary": "Get parsed pools",
+                "operationId": "getParsed",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListPools"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/parser/protocols": {
+            "get": {
+                "description": "Get current parse protocols",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse: setup parser"
+                ],
+                "summary": "Get protocols",
+                "operationId": "getProtocols",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListProtocols"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add parse protocols",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse: setup parser"
+                ],
+                "summary": "Add protocols",
+                "operationId": "addProtocols",
+                "parameters": [
+                    {
+                        "description": "Set protocol",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ListProtocols"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListProtocols"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove parse protocols",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Parse: setup parser"
+                ],
+                "summary": "Remove protocols",
+                "operationId": "rmProtocols",
+                "parameters": [
+                    {
+                        "description": "Remove protocols",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ListProtocols"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/ListProtocols"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/provider/tokens": {
             "get": {
                 "description": "Request token list",
@@ -211,7 +379,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tradecase"
+                    "Provider: tokens"
                 ],
                 "summary": "List Tokens",
                 "operationId": "listTokens",
@@ -233,7 +401,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "tradecase"
+                    "Provider: tokens"
                 ],
                 "summary": "Add Tokens",
                 "operationId": "addTokens",
@@ -260,6 +428,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -274,8 +448,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: pools"
                 ],
                 "summary": "Get Pools",
                 "operationId": "getPoolList",
@@ -284,12 +457,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/ListPools"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "507": {
@@ -309,8 +476,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: pools"
                 ],
                 "summary": "Add Pools",
                 "operationId": "addPools",
@@ -355,8 +521,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: pools"
                 ],
                 "summary": "Delete Pools",
                 "operationId": "deletePools",
@@ -403,8 +568,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: tokens"
                 ],
                 "summary": "Get Tokens",
                 "operationId": "getTokensList",
@@ -413,12 +577,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/TokenList"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "507": {
@@ -438,8 +596,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: tokens"
                 ],
                 "summary": "Add Tokens",
                 "operationId": "storeTokens",
@@ -484,8 +641,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "parsecase",
-                    "tradecase"
+                    "Storage: tokens"
                 ],
                 "summary": "Delete Tokens",
                 "operationId": "deleteTokens",
@@ -522,6 +678,98 @@ const docTemplate = `{
                 }
             }
         },
+        "/trade/core/flash-arbitrage": {
+            "get": {
+                "description": "Call flash arbitrage func from contract with give pools",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade: core"
+                ],
+                "summary": "DoArbitrage",
+                "operationId": "doArbitrage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Swap pool 0",
+                        "name": "pool0",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Swap pool 1",
+                        "name": "pool1",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/trade/core/profit-check": {
+            "get": {
+                "description": "Find out if trade with given pools is profitable",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade: core"
+                ],
+                "summary": "CheckProfit",
+                "operationId": "checkProfit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Swap pool 0",
+                        "name": "pool0",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Swap pool 1",
+                        "name": "pool1",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/trade/core/withdraw": {
             "get": {
                 "description": "Withdraw tokens from contract",
@@ -532,7 +780,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: core"
                 ],
                 "summary": "Withdraw",
                 "operationId": "withdraw",
@@ -543,8 +791,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/Response"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -562,7 +810,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: setup case"
                 ],
                 "summary": "Load Pairs",
                 "operationId": "loadPairs",
@@ -573,8 +821,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/ListPairs"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -592,7 +840,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: setup case"
                 ],
                 "summary": "Load Tokens",
                 "operationId": "loadTokens",
@@ -603,8 +851,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/TokenList"
                         }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "507": {
+                        "description": "Insufficient Storage",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -622,7 +870,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: base tokens"
                 ],
                 "summary": "Add Base Token",
                 "operationId": "addBase",
@@ -642,8 +890,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/Response"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -659,7 +907,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "trade"
+                    "Trade: base tokens"
                 ],
                 "summary": "Remove Base Token",
                 "operationId": "rmBase",
@@ -678,8 +926,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/Response"
                         }
                     },
-                    "507": {
-                        "description": "Insufficient Storage",
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -721,6 +969,19 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/entities.Pool"
+                    }
+                }
+            }
+        },
+        "ListProtocols": {
+            "description": "Request list of protocols",
+            "type": "object",
+            "properties": {
+                "protocols": {
+                    "description": "list of protocols",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entities.SwapProtocol"
                     }
                 }
             }

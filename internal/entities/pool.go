@@ -4,7 +4,7 @@ type Token struct {
 	ID      int    `json:"id" bson:"id" gorm:"column:id;primaryKey;type:integer;autoIncrement:true"`
 	Name    string `json:"name" bson:"name" gorm:"column:name;type:varchar(40)"`
 	Address string `json:"address" bson:"address" gorm:"column:address;type:varchar(50)"`
-	Wei     int    `json:"wei" bson:"wei" gorm:"column:wei;type:integer"`
+	Wei     int    `json:"wei" bson:"wei" gorm:"column:wei;type:bigint"`
 }
 
 type SwapProtocol struct {

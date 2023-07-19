@@ -6,31 +6,40 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// func SignTransactAndSend(c context.Context, tx *types.Transaction) {
-// 	ctx, cancel := context.WithCancel(c)
-// 	defer cancel()
+func Transaction(t interface{}) (
+	tx *types.Transaction,
+	ok bool,
+) {
+	tx, ok = t.(*types.Transaction)
 
-// 	bind.NewTransactorWithChainID()
-// }
-
-func Logs() types.Log {
-	return types.Log{}
+	return
 }
+
+func GetCallMsg(from, to string) ethereum.CallMsg {
+	toAddr := ToAddress(to)
+	msg := ethereum.CallMsg{
+		From:     ToAddress(from),
+		To:       &toAddr,
+		Gas:      21000,
+		GasPrice: big.NewInt(18000000000),
+		Value:    big.NewInt(666),
+		Data:     nil,
+	}
+	return msg
+}
+
 func ToAddress(s string) common.Address {
 	return common.HexToAddress(s)
 }
 
-func ListAddress(addrs ...common.Address) (
-	out []common.Address,
-) {
-	out = append(out, addrs...)
-
-	return
+func ToHash(s string) common.Hash {
+	return common.HexToHash(s)
 }
 
 func FromAddress(a common.Address) string {

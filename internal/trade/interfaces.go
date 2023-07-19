@@ -127,7 +127,6 @@ type SmartContract interface {
 	ContractStorage
 
 	contract.Api
-	// Trade() contract.Trade
 }
 
 type ContractStorage interface {
@@ -157,11 +156,15 @@ type ContractStorage interface {
 }
 
 type Parser interface {
+	// AddProtocol(entities.SwapProtocol)
+
 	Parse([]entities.TokenPair) error
+
+	// ListProtocols() []ParseProtocol
 
 	ParseStore
 
-	ParseProtocol
+	ProtocolManager
 }
 
 type ParseStore interface {
@@ -186,10 +189,12 @@ type ParseStore interface {
 	Clear()
 }
 
-type ParseProtocol interface {
-	SetProtocol(entities.SwapProtocol)
+type ProtocolManager interface {
+	ListProtocols() []entities.SwapProtocol
 
-	GetProtocol() entities.SwapProtocol
+	AddProtocol(entities.SwapProtocol) error
 
-	GetPoolAddress(entities.TokenPair) (string, error)
+	RemoveProtocol(entities.SwapProtocol) error
+
+	GetPoolAddresses(entities.TokenPair) (map[entities.SwapProtocol]string, error)
 }

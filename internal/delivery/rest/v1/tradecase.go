@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,12 +21,12 @@ type tradecaseRoutes struct {
 // @Summary     Add Pairs
 // @Description Add list of pairs to contract tradecase memory
 // @ID          addPairs
-// @Tags  	    tradecase
+// @Tags  	    Contract: pairs
 // @Accept      json
 // @Produce     json
 // @Param       request body listPairs true "Add pairs"
 // @Success     201 {object} listPairs
-// @Failure     400 {object} responseErr
+// @Failure     500 {object} responseErr
 // @Router      /contract/pairs [post]
 func (tr *tradecaseRoutes) AddPairs(
 	c *gin.Context,
@@ -49,7 +50,7 @@ func (tr *tradecaseRoutes) AddPairs(
 
 	err = tr.t.Contract.SetPairs(c, req.Pairs)
 	if err != nil {
-		errorBadRequest(
+		errorInternalServer(
 			c, err.Error(),
 			Log(
 				tr.l.Error,
@@ -66,12 +67,10 @@ func (tr *tradecaseRoutes) AddPairs(
 // @Summary     List Pairs
 // @Description Get full list of pairs from contract tradecase memory
 // @ID          listPairs
-// @Tags  	    tradecase
+// @Tags  	    Contract: pairs
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listPairs
-// @Failure     400 {object} responseErr
-// @Failure     404 {object} responseErr
 // @Router      /contract/pairs [get]
 func (tr *tradecaseRoutes) ListPairs(
 	c *gin.Context,
@@ -89,7 +88,7 @@ func (tr *tradecaseRoutes) ListPairs(
 // @Summary     Get Pairs
 // @Description Get list of pool pairs from contract tradecase memory by token pair & protocol
 // @ID          getPairs
-// @Tags  	    tradecase
+// @Tags  	    Contract: pairs
 // @Accept      json
 // @Produce     json
 // @Param       request body tokenPair true "Get pairs"
@@ -145,12 +144,13 @@ func (tr *tradecaseRoutes) GetPairs(
 // @Summary     Add Tokens
 // @Description Add list of tokens
 // @ID          addTokens
-// @Tags  	    tradecase
+// @Tags  	    Provider: tokens
 // @Accept      json
 // @Produce     json
 // @Param       request body listTokens true "Add tokens"
 // @Success     201 {object} listTokens
 // @Failure     400 {object} responseErr
+// @Failure     409 {object} responseErr
 // @Router      /provider/tokens [post]
 func (tr *tradecaseRoutes) AddTokens(c *gin.Context) {
 	var req listTokens
@@ -190,7 +190,7 @@ func (tr *tradecaseRoutes) AddTokens(c *gin.Context) {
 // @Summary     List Tokens
 // @Description Request token list
 // @ID          listTokens
-// @Tags  	    tradecase
+// @Tags  	    Provider: tokens
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listTokens
@@ -206,11 +206,11 @@ func (tr *tradecaseRoutes) ListTokens(
 // @Summary     List base Tokens
 // @Description Request base token list from deployed contract memory
 // @ID          getTokens
-// @Tags  	    trade
+// @Tags  	    Trade: base tokens
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} listTokens
-// @Failure     507 {object} responseErr
+// @Failure     503 {object} responseErr
 // @Router      /contract/tokens/base [get]
 func (tr *tradecaseRoutes) GetBaseTokens(
 	c *gin.Context,
@@ -219,7 +219,7 @@ func (tr *tradecaseRoutes) GetBaseTokens(
 		eth.CallOpts(),
 	)
 	if err != nil {
-		errorInufficientStorage(
+		errorServiceUnavailable(
 			c, err.Error(),
 			Log(
 				tr.l.Error,
@@ -233,20 +233,76 @@ func (tr *tradecaseRoutes) GetBaseTokens(
 	respondOk(c, tokens)
 }
 
+// @Summary     Load Tokens
+// @Description Load unknown tokens from storage
+// @ID          loadTokens
+// @Tags  	    Trade: setup case
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listTokens
+// @Failure     507 {object} responseErr
+// @Router      /trade/tokens [get]
+func (tr *tradecaseRoutes) LoadTokens(
+	c *gin.Context,
+) {
+	err := tr.t.SetTokens(c, "tokens")
+	if err != nil {
+		errorInufficientStorage(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - LoadTokens",
+			),
+		)
+		return
+	}
+
+	respondOk(c, tr.t.Provider.ListTokens(c))
+}
+
+// @Summary     Load Pairs
+// @Description Load profitable pool pairs from storage
+// @ID          loadPairs
+// @Tags  	    Trade: setup case
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} listPairs
+// @Failure     503 {object} responseErr
+// @Router      /trade/pairs [get]
+func (tr *tradecaseRoutes) LoadPairs(
+	c *gin.Context,
+) {
+	err := tr.t.SetProfitablePairs(c, "pools")
+	if err != nil {
+		errorServiceUnavailable(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - LoadPairs",
+			),
+		)
+		return
+	}
+
+	respondOk(c, tr.t.Contract.ListPairs(c))
+}
+
 // @Summary     Add Base Token
 // @Description Add base token to contract
 // @ID          addBase
-// @Tags  	    trade
+// @Tags  	    Trade: base tokens
 // @Accept      json
 // @Produce     json
 // @Param		token query string true "Add base token"
 // @Success     201 {object} response
-// @Failure     507 {object} responseErr
+// @Failure     503 {object} responseErr
 // @Router      /trade/tokens/base [post]
 func (tr *tradecaseRoutes) AddBase(
 	c *gin.Context,
 ) {
-	ctx, cancel := context.WithCancel(c)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	addr := c.Query("token")
@@ -256,7 +312,7 @@ func (tr *tradecaseRoutes) AddBase(
 		addr,
 	)
 	if err != nil {
-		errorConflict(
+		errorServiceUnavailable(
 			c, err.Error(),
 			Log(
 				tr.l.Error,
@@ -274,17 +330,17 @@ func (tr *tradecaseRoutes) AddBase(
 // @Summary     Remove Base Token
 // @Description Remove base token from contract
 // @ID          rmBase
-// @Tags  	    trade
+// @Tags  	    Trade: base tokens
 // @Accept      json
 // @Produce     json
 // @Param		token query string false "Remove base token"
 // @Success     202 {object} response
-// @Failure     507 {object} responseErr
+// @Failure     503 {object} responseErr
 // @Router      /trade/tokens/base [delete]
 func (tr *tradecaseRoutes) RmBase(
 	c *gin.Context,
 ) {
-	ctx, cancel := context.WithCancel(c)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	addr := c.Query("token")
@@ -294,7 +350,7 @@ func (tr *tradecaseRoutes) RmBase(
 		addr,
 	)
 	if err != nil {
-		errorConflict(
+		errorServiceUnavailable(
 			c, err.Error(),
 			Log(
 				tr.l.Error,
@@ -308,81 +364,24 @@ func (tr *tradecaseRoutes) RmBase(
 	respondAccepted(c, res)
 }
 
-// @Summary     Load Tokens
-// @Description Load unknown tokens from storage
-// @ID          loadTokens
-// @Tags  	    trade
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} listTokens
-// @Failure     409 {object} responseErr
-// @Router      /trade/tokens [get]
-func (tr *tradecaseRoutes) LoadTokens(
-	c *gin.Context,
-) {
-	err := tr.t.SetTokens(c, "tokens")
-	if err != nil {
-		errorConflict(
-			c, err.Error(),
-			Log(
-				tr.l.Error,
-				err,
-				"rest - v1 - LoadTokens",
-			),
-		)
-		return
-	}
-
-	respondOk(c, tr.t.Provider.ListTokens(c))
-}
-
-// @Summary     Load Pairs
-// @Description Load profitable pool pairs from storage
-// @ID          loadPairs
-// @Tags  	    trade
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} listPairs
-// @Failure     507 {object} responseErr
-// @Router      /trade/pairs [get]
-func (tr *tradecaseRoutes) LoadPairs(
-	c *gin.Context,
-) {
-	err := tr.t.SetProfitablePairs(c, "pools")
-	if err != nil {
-		errorInufficientStorage(
-			c, err.Error(),
-			Log(
-				tr.l.Error,
-				err,
-				"rest - v1 - LoadPairs",
-			),
-		)
-		return
-	}
-
-	respondOk(c, tr.t.Contract.ListPairs(c))
-}
-
 // @Summary     Withdraw
 // @Description Withdraw tokens from contract
 // @ID          withdraw
-// @Tags  	    trade
+// @Tags  	    Trade: core
 // @Accept      json
 // @Produce     json
 // @Success     202 {object} response
-// @Failure     507 {object} responseErr
+// @Failure     503 {object} responseErr
 // @Router      /trade/core/withdraw [get]
 func (tr *tradecaseRoutes) Withdraw(
 	c *gin.Context,
 ) {
-
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
 	tx, err := tr.t.Withdraw(ctx)
 	if err != nil {
-		errorInufficientStorage(
+		errorServiceUnavailable(
 			c, err.Error(),
 			Log(
 				tr.l.Error,
@@ -397,6 +396,85 @@ func (tr *tradecaseRoutes) Withdraw(
 	respondAccepted(c, res)
 }
 
+// @Summary     CheckProfit
+// @Description Find out if trade with given pools is profitable
+// @ID          checkProfit
+// @Tags  	    Trade: core
+// @Accept      json
+// @Produce     json
+// @Param		pool0 query string true "Swap pool 0"
+// @Param		pool1 query string true "Swap pool 1"
+// @Success     202 {object} response
+// @Failure     503 {object} responseErr
+// @Router      /trade/core/profit-check [get]
+func (tr *tradecaseRoutes) CheckProfit(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	pool0 := c.Query("pool0")
+	pool1 := c.Query("pool1")
+
+	profit, baseToken, err := tr.t.GetProfit(ctx, pool0, pool1)
+	if err != nil {
+		errorServiceUnavailable(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - Withdraw",
+			),
+		)
+	}
+	var res response
+	if profit > 0 {
+		res = response{map[string]string{
+			"profit":     fmt.Sprintln(profit),
+			"base token": baseToken,
+		}}
+	} else {
+		res = response{false}
+	}
+
+	respondAccepted(c, res)
+}
+
+// @Summary     DoArbitrage
+// @Description Call flash arbitrage func from contract with give pools
+// @ID          doArbitrage
+// @Tags  	    Trade: core
+// @Accept      json
+// @Produce     json
+// @Param		pool0 query string true "Swap pool 0"
+// @Param		pool1 query string true "Swap pool 1"
+// @Success     202 {object} response
+// @Failure     502 {object} responseErr
+// @Router      /trade/core/flash-arbitrage [get]
+func (tr *tradecaseRoutes) DoArbitrage(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	pool0 := c.Query("pool0")
+	pool1 := c.Query("pool1")
+
+	tx, err := tr.t.Arbitrage(ctx, pool0, pool1)
+	if err != nil {
+		errorBadGateway(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - DoArbitrage",
+			),
+		)
+	}
+	res := response{tx}
+	respondAccepted(c, res)
+}
+
 func NewTradecaseRouter(
 	h *gin.RouterGroup,
 	t trade.TradeCase,
@@ -404,9 +482,9 @@ func NewTradecaseRouter(
 ) {
 	routes := &tradecaseRoutes{t, l}
 
+	NewTradeRouter(h, *routes)
 	NewProviderRouter(h, *routes)
 	NewContractRouter(h, *routes)
-	NewTradeRouter(h, *routes)
 }
 
 func NewContractRouter(
@@ -457,6 +535,18 @@ func NewTradeRouter(
 ) {
 	handler := h.Group("trade")
 	{
+		handler.GET(
+			"/core/withdraw",
+			tr.Withdraw,
+		)
+		handler.GET(
+			"/core/profit-check",
+			tr.CheckProfit,
+		)
+		handler.GET(
+			"/core/flash-arbitrage",
+			tr.DoArbitrage,
+		)
 		handler.POST(
 			"/tokens/base",
 			tr.AddBase,
@@ -472,10 +562,6 @@ func NewTradeRouter(
 		handler.GET(
 			"/pairs",
 			tr.LoadPairs,
-		)
-		handler.GET(
-			"/core/withdraw",
-			tr.Withdraw,
 		)
 	}
 }

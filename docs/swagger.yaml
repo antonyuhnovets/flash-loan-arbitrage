@@ -25,6 +25,15 @@ definitions:
           $ref: '#/definitions/entities.Pool'
         type: array
     type: object
+  ListProtocols:
+    description: Request list of protocols
+    properties:
+      protocols:
+        description: list of protocols
+        items:
+          $ref: '#/definitions/entities.SwapProtocol'
+        type: array
+    type: object
   RequestPairs:
     description: Request for searching trade pair
     properties:
@@ -122,17 +131,9 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ListPairs'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
       summary: List Pairs
       tags:
-      - tradecase
+      - 'Contract: pairs'
     post:
       consumes:
       - application/json
@@ -152,13 +153,13 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/ListPairs'
-        "400":
-          description: Bad Request
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Pairs
       tags:
-      - tradecase
+      - 'Contract: pairs'
   /contract/pairs/find:
     post:
       consumes:
@@ -190,7 +191,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Pairs
       tags:
-      - tradecase
+      - 'Contract: pairs'
   /contract/tokens/base:
     get:
       consumes:
@@ -204,14 +205,34 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TokenList'
-        "507":
-          description: Insufficient Storage
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: List base Tokens
       tags:
-      - trade
-  /parser/pools:
+      - 'Trade: base tokens'
+  /parser/core/parse:
+    get:
+      consumes:
+      - application/json
+      description: Parse and store to parser local memory
+      operationId: parse
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListPools'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Parse
+      tags:
+      - 'Parse: core'
+  /parser/core/parse-save:
     get:
       consumes:
       - application/json
@@ -230,7 +251,107 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Store parsed pools
       tags:
-      - parse
+      - 'Parse: core'
+  /parser/pools:
+    get:
+      consumes:
+      - application/json
+      description: Get pools from current parser
+      operationId: getParsed
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListPools'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get parsed pools
+      tags:
+      - 'Parse: setup parser'
+  /parser/protocols:
+    delete:
+      consumes:
+      - application/json
+      description: Remove parse protocols
+      operationId: rmProtocols
+      parameters:
+      - description: Remove protocols
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ListProtocols'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/ListProtocols'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Remove protocols
+      tags:
+      - 'Parse: setup parser'
+    get:
+      consumes:
+      - application/json
+      description: Get current parse protocols
+      operationId: getProtocols
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListProtocols'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get protocols
+      tags:
+      - 'Parse: setup parser'
+    post:
+      consumes:
+      - application/json
+      description: Add parse protocols
+      operationId: addProtocols
+      parameters:
+      - description: Set protocol
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ListProtocols'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListProtocols'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Add protocols
+      tags:
+      - 'Parse: setup parser'
   /provider/tokens:
     get:
       consumes:
@@ -246,7 +367,7 @@ paths:
             $ref: '#/definitions/TokenList'
       summary: List Tokens
       tags:
-      - tradecase
+      - 'Provider: tokens'
     post:
       consumes:
       - application/json
@@ -270,9 +391,13 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
       summary: Add Tokens
       tags:
-      - tradecase
+      - 'Provider: tokens'
   /storage/pools:
     delete:
       consumes:
@@ -303,8 +428,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Delete Pools
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: pools'
     get:
       consumes:
       - application/json
@@ -317,18 +441,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ListPools'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/ErrorResponse'
         "507":
           description: Insufficient Storage
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Pools
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: pools'
     post:
       consumes:
       - application/json
@@ -358,8 +477,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Pools
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: pools'
   /storage/tokens:
     delete:
       consumes:
@@ -390,8 +508,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Delete Tokens
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: tokens'
     get:
       consumes:
       - application/json
@@ -404,18 +521,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TokenList'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/ErrorResponse'
         "507":
           description: Insufficient Storage
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Get Tokens
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: tokens'
     post:
       consumes:
       - application/json
@@ -445,8 +557,69 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Tokens
       tags:
-      - parsecase
-      - tradecase
+      - 'Storage: tokens'
+  /trade/core/flash-arbitrage:
+    get:
+      consumes:
+      - application/json
+      description: Call flash arbitrage func from contract with give pools
+      operationId: doArbitrage
+      parameters:
+      - description: Swap pool 0
+        in: query
+        name: pool0
+        required: true
+        type: string
+      - description: Swap pool 1
+        in: query
+        name: pool1
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: DoArbitrage
+      tags:
+      - 'Trade: core'
+  /trade/core/profit-check:
+    get:
+      consumes:
+      - application/json
+      description: Find out if trade with given pools is profitable
+      operationId: checkProfit
+      parameters:
+      - description: Swap pool 0
+        in: query
+        name: pool0
+        required: true
+        type: string
+      - description: Swap pool 1
+        in: query
+        name: pool1
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: CheckProfit
+      tags:
+      - 'Trade: core'
   /trade/core/withdraw:
     get:
       consumes:
@@ -460,13 +633,13 @@ paths:
           description: Accepted
           schema:
             $ref: '#/definitions/Response'
-        "507":
-          description: Insufficient Storage
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Withdraw
       tags:
-      - trade
+      - 'Trade: core'
   /trade/pairs:
     get:
       consumes:
@@ -480,13 +653,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ListPairs'
-        "507":
-          description: Insufficient Storage
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Pairs
       tags:
-      - trade
+      - 'Trade: setup case'
   /trade/tokens:
     get:
       consumes:
@@ -500,13 +673,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TokenList'
-        "409":
-          description: Conflict
+        "507":
+          description: Insufficient Storage
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Load Tokens
       tags:
-      - trade
+      - 'Trade: setup case'
   /trade/tokens/base:
     delete:
       consumes:
@@ -525,13 +698,13 @@ paths:
           description: Accepted
           schema:
             $ref: '#/definitions/Response'
-        "507":
-          description: Insufficient Storage
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Remove Base Token
       tags:
-      - trade
+      - 'Trade: base tokens'
     post:
       consumes:
       - application/json
@@ -550,11 +723,11 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Response'
-        "507":
-          description: Insufficient Storage
+        "503":
+          description: Service Unavailable
           schema:
             $ref: '#/definitions/ErrorResponse'
       summary: Add Base Token
       tags:
-      - trade
+      - 'Trade: base tokens'
 swagger: "2.0"

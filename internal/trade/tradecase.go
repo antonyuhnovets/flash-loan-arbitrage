@@ -2,11 +2,8 @@ package trade
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/pairs"
 )
 
@@ -99,6 +96,7 @@ func (tc *TradeCase) SetProfitablePairs(
 	}
 
 	prof, ok, err := tc.GetProfitable(
+		ctx,
 		tradePairs,
 	)
 	if err != nil || !ok {
@@ -116,176 +114,27 @@ func (tc *TradeCase) SetProfitablePairs(
 	return
 }
 
-func (tc *TradeCase) GetProfitable(from []entities.TradePair) (
+func (tc *TradeCase) GetProfitable(ctx context.Context, from []entities.TradePair) (
 	out []entities.TradePair,
 	ok bool,
 	err error,
 ) {
 	ok = false
 	for _, pair := range from {
-		res, _err := tc.Contract.Api().Caller().GetProfit(
-			eth.CallOpts(),
-			eth.ToAddress(pair.Pool0.Address),
-			eth.ToAddress(pair.Pool1.Address),
+		prof, _, _err := tc.GetProfit(
+			ctx,
+			pair.Pool0.Address,
+			pair.Pool1.Address,
 		)
 		if err != nil {
 			err = _err
+
 			return
 		}
-		if int(res.Profit.Int64()) > 0 {
+		if prof > 0 {
 			out = append(out, pair)
 			ok = true
 		}
 	}
-	return
-}
-
-func (tc *TradeCase) Withdraw(
-	ctx context.Context,
-) (
-	tx interface{},
-	err error,
-) {
-	log.Println("sending tx")
-	c, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	auth := tc.Provider.GetClient(ctx).(*eth.Client)
-	// auth := tc.Provider.GetClient(ctx)
-
-	b, err := auth.GetNextTransaction(c)
-	if err != nil {
-		log.Println(err)
-
-		return
-	}
-
-	t, err := tc.Contract.Api().Transactor().Withdraw(b)
-	if err != nil {
-		log.Println(err)
-
-		return
-	}
-
-	tx, err = auth.Transact(c, t)
-	if err != nil {
-		log.Println(err)
-
-		return
-	}
-
-	return
-}
-
-func (tc *TradeCase) AddBaseToken(
-	ctx context.Context,
-	address string,
-) (
-	tx interface{},
-	err error,
-) {
-	// c, cancel := context.WithCancel(ctx)
-	// defer cancel()
-
-	ok, err := tc.Contract.Api().Caller().BaseTokensContains(
-		eth.CallOpts(ctx),
-		eth.ToAddress(address),
-	)
-	if err != nil {
-		return
-	}
-	if ok {
-		err = fmt.Errorf("token %v already added", address)
-		return
-	}
-	log.Println("sending tx")
-
-	auth := tc.Provider.GetClient(ctx).(*eth.Client)
-	// auth := tc.Provider.GetClient(c)
-
-	b, err := auth.GetNextTransaction(ctx)
-	if err != nil {
-
-		return
-	}
-
-	t, err := tc.Contract.Api().Transactor().AddBaseToken(
-		b, eth.ToAddress(address),
-	)
-	if err != nil {
-		log.Println(err)
-
-		return
-	}
-
-	// r, err := bind.WaitMined(c, auth.Client, t)
-
-	// fmt.Println(r)
-
-	tx, isPending, err := auth.Client.TransactionByHash(ctx, t.Hash())
-	if err != nil {
-		return
-	}
-
-	fmt.Println(isPending)
-
-	return
-}
-
-func (tc *TradeCase) RmBaseToken(
-	ctx context.Context,
-	address string,
-) (
-	tx interface{},
-	err error,
-) {
-	// c, cancel := context.WithCancel(ctx)
-	// defer cancel()
-
-	ok, err := tc.Contract.Api().Caller().BaseTokensContains(
-		eth.CallOpts(ctx),
-		eth.ToAddress(address),
-	)
-	if err != nil {
-		return
-	}
-	if !ok {
-		tx = nil
-		err = fmt.Errorf("token %v not found", address)
-
-		return
-	}
-
-	log.Println("sending tx")
-
-	auth := tc.Provider.GetClient(ctx).(*eth.Client)
-	// auth := tc.Provider.GetClient(c)
-
-	b, _err := auth.GetNextTransaction(ctx)
-	if err != nil {
-		log.Println(err)
-		err = _err
-
-		return
-	}
-
-	t, _err := tc.Contract.Api().Transactor().RemoveBaseToken(
-		b, eth.ToAddress(address),
-	)
-	if _err != nil {
-		err = _err
-
-		return
-	}
-
-	tx, isPending, _err := auth.Client.TransactionByHash(ctx, t.Hash())
-	if err != nil {
-		err = _err
-
-		return
-	}
-
-	fmt.Println(isPending)
-
 	return
 }
