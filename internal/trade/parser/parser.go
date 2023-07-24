@@ -92,13 +92,19 @@ func (proto *Protocols) Resolve(sp *prs.Protocol) (
 	pp prs.ProtocolParser,
 	err error,
 ) {
-	switch sp.GetProtocolData() {
-	case proto.uni2.SwapProtocol:
+	switch sp.GetProtocolData().Name {
+	case proto.uni2.SwapProtocol.Name:
+		proto.checkAndSetProtoData(sp, "uni2")
 		pp = proto.uni2
-	case proto.uni3.SwapProtocol:
+
+	case proto.uni3.SwapProtocol.Name:
+		proto.checkAndSetProtoData(sp, "uni3")
 		pp = proto.uni3
-	case proto.sushi2.SwapProtocol:
+
+	case proto.sushi2.SwapProtocol.Name:
+		proto.checkAndSetProtoData(sp, "sushi2")
 		pp = proto.sushi2
+
 	}
 
 	if pp == nil {
@@ -106,4 +112,27 @@ func (proto *Protocols) Resolve(sp *prs.Protocol) (
 	}
 
 	return
+}
+
+func (proto *Protocols) checkAndSetProtoData(p *prs.Protocol, which string) {
+	var t interface{}
+	data := p.GetProtocolData()
+
+	switch which {
+	case "sushi2":
+		t = proto.sushi2
+	case "uni2":
+		t = proto.uni2
+	case "uni3":
+		t = proto.uni3
+	}
+
+	tp := t.(*prs.Protocol)
+
+	if data.Factory != tp.Factory {
+		tp.Factory = data.Factory
+	}
+	if data.SwapRouter != tp.SwapRouter {
+		tp.SwapRouter = data.SwapRouter
+	}
 }
