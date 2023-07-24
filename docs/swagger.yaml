@@ -398,6 +398,68 @@ paths:
       summary: Add Tokens
       tags:
       - 'Provider: tokens'
+  /replace-tx-add:
+    post:
+      consumes:
+      - application/json
+      description: Replace transaction by hash with add base token tx
+      operationId: replaceTxAdd
+      parameters:
+      - description: Tx hash
+        in: query
+        name: hash
+        required: true
+        type: string
+      - description: Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Replace Tx with add base
+      tags:
+      - 'Trade: core'
+  /replace-tx-rm:
+    delete:
+      consumes:
+      - application/json
+      description: Replace transaction by hash with remove base token tx
+      operationId: replaceTxRm
+      parameters:
+      - description: Tx hash
+        in: query
+        name: hash
+        required: true
+        type: string
+      - description: Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Replace Tx with rm base token
+      tags:
+      - 'Trade: core'
   /storage/pools:
     delete:
       consumes:

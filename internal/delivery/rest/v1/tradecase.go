@@ -475,6 +475,76 @@ func (tr *tradecaseRoutes) DoArbitrage(
 	respondAccepted(c, res)
 }
 
+// @Summary     Replace Tx with add base
+// @Description Replace transaction by hash with add base token tx
+// @ID          replaceTxAdd
+// @Tags  	    Trade: core
+// @Accept      json
+// @Produce     json
+// @Param		hash query string true "Tx hash"
+// @Param		token query string true "Token"
+// @Success     202 {object} response
+// @Failure     502 {object} responseErr
+// @Router      /replace-tx-add [post]
+func (tr *tradecaseRoutes) ReplaceTxAddBase(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	addr := c.Query("hash")
+	tx, err := tr.t.ReplaceTxWithAddBaseToken(ctx, addr, c.Query("token"))
+	if err != nil {
+		errorBadGateway(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - ReplaceTxAddBase",
+			),
+		)
+	}
+
+	res := response{tx}
+
+	respondAccepted(c, res)
+}
+
+// @Summary     Replace Tx with rm base token
+// @Description Replace transaction by hash with remove base token tx
+// @ID          replaceTxRm
+// @Tags  	    Trade: core
+// @Accept      json
+// @Produce     json
+// @Param		hash query string true "Tx hash"
+// @Param		token query string true "Token"
+// @Success     202 {object} response
+// @Failure     502 {object} responseErr
+// @Router      /replace-tx-rm [delete]
+func (tr *tradecaseRoutes) ReplaceTxRmBase(
+	c *gin.Context,
+) {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	addr := c.Query("hash")
+	tx, err := tr.t.ReplaceTxWithAddBaseToken(ctx, addr, c.Query("token"))
+	if err != nil {
+		errorBadGateway(
+			c, err.Error(),
+			Log(
+				tr.l.Error,
+				err,
+				"rest - v1 - ReplaceTxRmBase",
+			),
+		)
+	}
+
+	res := response{tx}
+
+	respondAccepted(c, res)
+}
+
 func NewTradecaseRouter(
 	h *gin.RouterGroup,
 	t trade.TradeCase,
@@ -546,6 +616,14 @@ func NewTradeRouter(
 		handler.GET(
 			"/core/flash-arbitrage",
 			tr.DoArbitrage,
+		)
+		handler.POST(
+			"/replace-tx-add",
+			tr.ReplaceTxAddBase,
+		)
+		handler.DELETE(
+			"/replace-tx-add",
+			tr.ReplaceTxRmBase,
 		)
 		handler.POST(
 			"/tokens/base",

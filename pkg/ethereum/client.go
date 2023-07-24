@@ -132,3 +132,28 @@ func (c *Client) SignTx(ctx context.Context, tx *types.Transaction) (
 
 	return
 }
+
+func (c *Client) ReplaceTx(ctx context.Context, hash string) (
+	opts *bind.TransactOpts,
+	err error,
+) {
+
+	opts, err = c.GetNextTransaction(ctx)
+	if err != nil {
+		fmt.Println(err)
+
+		return
+	}
+
+	trans, _, err := c.Client.TransactionByHash(
+		ctx,
+		ToHash(hash))
+
+	if err != nil {
+		return
+	}
+
+	opts.Nonce = ToBigInt(int(trans.Nonce()))
+
+	return
+}

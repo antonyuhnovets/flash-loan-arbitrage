@@ -113,12 +113,19 @@ func (tc *TradeCase) Withdraw(
 	fmt.Println("sending tx")
 	auth := tc.Provider.GetClient(ctx).(*eth.Client)
 
+	// bal, err := auth.Client.BalanceAt(
+	// 	ctx, eth.ToAddress(tc.Contract.Address()), nil)
+	// if err != nil {
+	// 	return
+	// }
 	b, err := auth.GetNextTransaction(ctx)
 	if err != nil {
 		fmt.Println(err)
 
 		return
 	}
+
+	// b.Value = bal.Sub
 
 	t, err := tc.Contract.Api().Transactor().Withdraw(b)
 	if err != nil {
@@ -183,6 +190,42 @@ func (tc *TradeCase) Arbitrage(ctx context.Context, pool0, pool1 string) (
 	}
 
 	fmt.Println(isPending)
+
+	return
+}
+
+func (tc *TradeCase) ReplaceTxWithAddBaseToken(
+	ctx context.Context,
+	token, hash string,
+) (
+	tx interface{},
+	err error,
+) {
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	b, err := auth.ReplaceTx(ctx, hash)
+	if err != nil {
+		return
+	}
+
+	tx, err = tc.Contract.Api().Transactor().AddBaseToken(b, eth.ToAddress(token))
+
+	return
+}
+
+func (tc *TradeCase) ReplaceTxWithRmBaseToken(
+	ctx context.Context,
+	token, hash string,
+) (
+	tx interface{},
+	err error,
+) {
+	auth := tc.Provider.GetClient(ctx).(*eth.Client)
+	b, err := auth.ReplaceTx(ctx, hash)
+	if err != nil {
+		return
+	}
+
+	tx, err = tc.Contract.Api().Transactor().RemoveBaseToken(b, eth.ToAddress(token))
 
 	return
 }

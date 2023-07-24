@@ -430,6 +430,98 @@
                 }
             }
         },
+        "/replace-tx-add": {
+            "post": {
+                "description": "Replace transaction by hash with add base token tx",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade: core"
+                ],
+                "summary": "Replace Tx with add base",
+                "operationId": "replaceTxAdd",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tx hash",
+                        "name": "hash",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/replace-tx-rm": {
+            "delete": {
+                "description": "Replace transaction by hash with remove base token tx",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade: core"
+                ],
+                "summary": "Replace Tx with rm base token",
+                "operationId": "replaceTxRm",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tx hash",
+                        "name": "hash",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/storage/pools": {
             "get": {
                 "description": "Get list of all pools from storage",
