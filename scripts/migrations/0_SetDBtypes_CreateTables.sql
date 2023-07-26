@@ -1,13 +1,14 @@
-CREATE DATABASE flashloan;
 CREATE TYPE token as (
     id int, 
     name varchar(40), 
     address varchar(50), 
-    wei int
+    wei bigint
     );
+
 CREATE TABLE tokens OF token(
     PRIMARY KEY(id)
     );
+
 CREATE TYPE token_pair AS (
     id int,
     token0 token, 

@@ -1,4 +1,4 @@
-package trade
+package pairs
 
 import (
 	"fmt"
@@ -248,6 +248,39 @@ func GetPoolsByPair(
 		if PoolContainPair(pool, pair) {
 			out = append(out, pool)
 		}
+	}
+
+	return
+}
+
+func PairsFromTokens(tokens []entities.Token) (pairs []entities.TokenPair) {
+	m := make(
+		map[entities.Token]entities.TokenPair,
+	)
+	n := make(
+		map[entities.TokenPair]int,
+	)
+
+	for index, token := range tokens {
+		if _, ok := m[token]; !ok {
+			for _, t := range tokens {
+				if t != token {
+
+					m[token] = entities.TokenPair{
+						Token0: token,
+						Token1: t,
+					}
+
+					n[m[token]] = index
+				}
+			}
+		}
+
+		continue
+	}
+
+	for k := range n {
+		pairs = append(pairs, k)
 	}
 
 	return

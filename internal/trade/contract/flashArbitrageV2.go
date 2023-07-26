@@ -5,49 +5,41 @@ import (
 	"fmt"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/trade"
-
-	cm "github.com/ethereum/go-ethereum/common"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/pairs"
 )
 
 type FlashArbContract struct {
-	Address    cm.Address
-	api        API
-	trade      Trade
+	api        *Contract
 	tradePairs []entities.TradePair
 }
 
-func NewContract(
-	address cm.Address,
-	api flashArb,
+func NewFlashArbContract(
+	api *Contract,
 	pairs []entities.TradePair,
 ) (
 	contract *FlashArbContract,
 ) {
-	a := &Api{api}
 
 	contract = &FlashArbContract{
-		Address:    address,
-		api:        a,
-		trade:      TradeApi(a),
+		api:        api,
 		tradePairs: pairs,
 	}
 
 	return
 }
 
-func (fc *FlashArbContract) API() (
-	out flashArb,
+func (fc *FlashArbContract) Api() (
+	out API,
 ) {
-	out = fc.api.API()
+	out = fc.api.Api()
 
 	return
 }
 
-func (fc *FlashArbContract) Trade() (
-	out Trade,
+func (fc *FlashArbContract) Address() (
+	out string,
 ) {
-	out = fc.trade
+	out = fc.api.Address()
 
 	return
 }
@@ -69,8 +61,9 @@ func (fc *FlashArbContract) AddPair(
 		)
 		return
 	}
+
 	fc.tradePairs = append(fc.tradePairs, pair)
-	fmt.Print(fc.tradePairs)
+
 	return
 }
 
@@ -110,6 +103,7 @@ func (fc *FlashArbContract) GetPair(
 		)
 		return
 	}
+
 	pair = fc.tradePairs[index]
 
 	return
@@ -121,8 +115,6 @@ func (fc *FlashArbContract) ListPairs(
 	vals []entities.TradePair,
 ) {
 	vals = append(vals, fc.tradePairs...)
-
-	fmt.Println(vals)
 
 	return
 }
@@ -162,19 +154,19 @@ func (fc *FlashArbContract) GetPairs(
 	protocol entities.SwapProtocol,
 	tokens entities.TokenPair,
 ) (
-	pairs []entities.TradePair,
+	out []entities.TradePair,
 	ok bool,
 ) {
 	for _, pair := range fc.tradePairs {
-		if trade.CheckPairTokens(
+		if pairs.CheckPairTokens(
 			pair,
 			tokens,
-		) && trade.CheckPairProtocol(
+		) && pairs.CheckPairProtocol(
 			pair,
 			protocol,
 		) {
-			pairs = append(
-				pairs,
+			out = append(
+				out,
 				pair,
 			)
 			ok = true

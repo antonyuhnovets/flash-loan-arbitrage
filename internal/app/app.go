@@ -10,18 +10,17 @@ import (
 	"os/exec"
 	"os/signal"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 	v1 "github.com/antonyuhnovets/flash-loan-arbitrage/internal/delivery/rest/v1"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/contract"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/parser"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/provider"
-	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/tradecase/repo"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/contract"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/parser"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/provider"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade/repo"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/httpserver"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/pkg/logger"
@@ -40,10 +39,14 @@ func Run(conf *config.Config) {
 	}
 
 	// contract connect
-	cAdress := common.HexToAddress(
-		conf.Blockchain.Contract.Address,
+	ap, err := api.NewApi(
+		ethereum.ToAddress(conf.Blockchain.Contract.Address),
+		cl.Client,
 	)
-	ctr, err := cl.DialContract(cAdress.Hex())
+	if err != nil {
+		log.Fatal(err)
+	}
+	cont, err := contract.New(conf.Blockchain.Contract.Address, ap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,11 +54,10 @@ func Run(conf *config.Config) {
 	// Tradecase
 
 	// contract instance
-	contract := contract.NewContract(
-		cAdress, ctr.(*api.Api),
+	ctr := contract.NewFlashArbContract(
+		cont,
 		make([]entities.TradePair, 0),
 	)
-
 	// provider create
 	provider, err := provider.NewTradeProvider(
 		ctx, conf.Blockchain.Url, os.Getenv("ACCOUNT_PRIVATE_KEY"),
@@ -65,7 +67,7 @@ func Run(conf *config.Config) {
 	}
 
 	// repository setup
-	var repository tradecase.Repository
+	var repository trade.Repository
 
 	switch conf.Storage.Type {
 	case "localfile":
@@ -93,51 +95,34 @@ func Run(conf *config.Config) {
 	}
 
 	// new tradecase
-	tc := tradecase.New(
+	tc := trade.New(
 		repository,
 		provider,
-		contract,
+		ctr,
 	)
-
-	// store tokens
-	// tokenPair := entities.TokenPair{
-	// 	Token0: entities.Token{
-	// 		ID:      1,
-	// 		Name:    "WETH",
-	// 		Address: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
-	// 		WeiVal:  1000000000000000000,
-	// 	},
-	// 	Token1: entities.Token{
-	// 		ID:      2,
-	// 		Name:    "LINK",
-	// 		Address: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
-	// 		WeiVal:  1000000000000000000,
-	// 	},
-	// }
-
-	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token0)
-	// tc.Repo.AddToken(ctx, "tokens", tokenPair.Token1)
-
-	// err = tc.SetTokens(ctx, "tokens")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// pairList := make([]entities.TokenPair, 0)
-	// pairList = append(pairList, tokenPair)
 
 	// Parsecase
 
 	// new parser with protocol
-	p := parser.NewParser(entities.SwapProtocol{
+	p := parser.NewParser()
+	p.AddProtocol(entities.SwapProtocol{
 		Name:       "Uniswap-V2",
 		Factory:    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
 		SwapRouter: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
 	})
-	// p["uniswap-v3"] = &parseUniV3
+	p.AddProtocol(entities.SwapProtocol{
+		ID:         1,
+		Name:       "Sushiswap-V2",
+		Factory:    "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
+		SwapRouter: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+	})
+
+	// name: "Uniswap-V3"
+	// factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+	// router: "0xE592427A0AEce92De3Edee1F18E0157C05861564"
 
 	// parsecase create
-	pc := tradecase.NewParseCase(
+	pc := trade.NewParseCase(
 		repository,
 		p,
 	)
@@ -193,28 +178,28 @@ func IsDeployed(address string) bool {
 	return address != ""
 }
 
-func Deploy(conf *config.Config) (string, error) {
-	arg := fmt.Sprintf(
-		"network=%s",
-		conf.Blockchain.Name,
-	)
-	arg1 := fmt.Sprintf(
-		"contract=%s",
-		conf.Contract.Address,
-	)
-
-	cmd := exec.Command("make", "deploy", arg, arg1)
-	cmd.Stderr = os.Stderr
-
-	out, err := cmd.Output()
+func Deploy(
+	ctx context.Context,
+	cl *ethereum.Client,
+	ctr *contract.Contract,
+	conf *config.Config,
+) (
+	address, txHash string,
+	ap *api.Api,
+	err error,
+) {
+	b, err := cl.GetNextTransaction(ctx)
 	if err != nil {
-		return "", err
+		return
 	}
+	addr, tx, ap, err := api.DeployApi(
+		b, cl.Client,
+		ethereum.ToAddress(conf.Blockchain.Contract.Input),
+	)
+	address = ethereum.FromAddress(addr)
+	txHash = tx.Hash().Hex()
 
-	address := string(out)[len(string(out))-43:]
-	os.Setenv("CONTRACT_ADDRESS", address)
-
-	return address, nil
+	return
 }
 
 func Build(conf *config.Config) error {
@@ -233,5 +218,29 @@ func Build(conf *config.Config) error {
 
 	return nil
 }
+
+// func Deploy(conf *config.Config) (string, error) {
+// 	arg := fmt.Sprintf(
+// 		"network=%s",
+// 		conf.Blockchain.Name,
+// 	)
+// 	arg1 := fmt.Sprintf(
+// 		"contract=%s",
+// 		conf.Contract.Address,
+// 	)
+
+// 	cmd := exec.Command("make", "deploy", arg, arg1)
+// 	cmd.Stderr = os.Stderr
+
+// 	out, err := cmd.Output()
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	address := string(out)[len(string(out))-43:]
+// 	os.Setenv("CONTRACT_ADDRESS", address)
+
+// 	return address, nil
+// }
 
 func Verify(conf *config.Config) {}
