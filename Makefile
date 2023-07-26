@@ -1,28 +1,28 @@
 run:
 	build/app/webapi
 
-# Build
-build-up:
-	docker compose build
-	docker compose up -d
+clear:
+	sudo rm -rf $(path) || true
 
-build-down:
-	docker compose down
+# Build 
+# l=true for attached logs, r=true for rebuild
+build-init:
+	make build-restart r=$(r) l=$(l)
 
-build-rm:
-	sudo rm -rf pg_data pg_data_test
-	docker rm flash-postgres
-	docker rm flash-webapi
+build-run:
+	$(l) \ && docker compose up || docker compose up -d 
 
 build-restart:
-	docker compose down 
-	docker compose up -d
+	make build-stop r=$(r)
+	$(r) \ && make rebuild l=$(l) || make build-run l=$(l)
 
-build-reload:
-	docker compose down
-	sudo rm -rf pg_data pg_data_test
+build-stop:
+	docker compose down || true
+	$(r) \ && make db-clear || echo "rebuild disabled"
+
+rebuild:
 	docker compose build
-	docker compose up -d
+	make build-run l=$(l)
 
 # App
 app-start:
@@ -32,24 +32,33 @@ app-start:
 app-stop:
 	docker stop flash-webapi
 
+app-build:
+	docker exec flash-webapi make go-build
+
+app-logs:
+	docker logs flash-webapi
+
 app-restart:
 	make app-stop
 	make app-start
 
 app-reload:
-	make app-stop
-	make go-build
-	make app-start
+	make app-build
+	make app-restart
 
-app-build:
-	make go-build
-
-app-logs:
-	docker logs flash-webapi
+app-rm:
+	docker rm flash-webapi || true
 
 # Database
 db-logs:
 	docker logs flash-pg
+
+db-clear:
+	make clear path=pg_data
+	make clear path=pg_data_test
+
+db-rm: 
+	docker rm flash-webapi || true
 
 # Go
 go-build:

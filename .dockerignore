@@ -2,5 +2,5 @@ tmp
 .vscode
 cache
 storage_test
-**/node_modules/
+node_modules
 .example.env

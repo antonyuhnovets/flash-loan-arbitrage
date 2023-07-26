@@ -1,0 +1,30 @@
+FROM golang:1.19-alpine
+
+RUN apk update && apk upgrade --no-cache
+
+RUN apk --no-cache add ca-certificates \
+    && apk add --no-cache make bash git gcc build-base 
+
+WORKDIR /app
+
+# go env and modules
+ENV CGO_ENABLED=1 \
+  GOOS=linux \
+  GOARCH=amd64
+
+COPY . .
+COPY .env .
+
+RUN go get -u github.com/githubnemo/CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon@latest
+RUN go install -mod=mod golang.org/x/tools/gopls@latest
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN go mod download
+
+ENTRYPOINT CompileDaemon \
+            -polling=true \
+            -polling-interval=90000 \
+            -log-prefix=false \
+            -graceful-kill=true \
+            --build="make go-build" \
+            --command="make run"

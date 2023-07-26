@@ -4,14 +4,18 @@ services:
     container_name: flash-webapi
     env_file:
       - .env
-    build: .
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
     ports:
       - 8080:8080
     restart: on-failure
     volumes:
       - .:/app
+    # command: CompileDaemon --build="make go-build" --directory=./app --command="make run"
     depends_on:
       - postgresdb
+    tty: true
     networks:
       - net1
 

@@ -115,24 +115,29 @@ func (proto *Protocols) Resolve(sp *prs.Protocol) (
 }
 
 func (proto *Protocols) checkAndSetProtoData(p *prs.Protocol, which string) {
-	var t interface{}
 	data := p.GetProtocolData()
 
 	switch which {
 	case "sushi2":
-		t = proto.sushi2
+		if data.Factory != proto.sushi2.Factory {
+			proto.sushi2.Factory = data.Factory
+		}
+		if data.SwapRouter != proto.uni2.SwapRouter {
+			proto.sushi2.SwapRouter = data.SwapRouter
+		}
 	case "uni2":
-		t = proto.uni2
+		if data.Factory != proto.uni2.Factory {
+			proto.sushi2.Factory = data.Factory
+		}
+		if data.SwapRouter != proto.uni3.SwapRouter {
+			proto.uni2.SwapRouter = data.SwapRouter
+		}
 	case "uni3":
-		t = proto.uni3
-	}
-
-	tp := t.(*prs.Protocol)
-
-	if data.Factory != tp.Factory {
-		tp.Factory = data.Factory
-	}
-	if data.SwapRouter != tp.SwapRouter {
-		tp.SwapRouter = data.SwapRouter
+		if data.Factory != proto.uni3.Factory {
+			proto.sushi2.Factory = data.Factory
+		}
+		if data.SwapRouter != proto.uni3.SwapRouter {
+			proto.uni3.SwapRouter = data.SwapRouter
+		}
 	}
 }
