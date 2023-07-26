@@ -9,3 +9,6 @@ tmp
 .env
 package-lock.json
 filestorage
+cache
+pg_data
+pg_data_test

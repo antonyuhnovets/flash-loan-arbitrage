@@ -3,8 +3,6 @@ package contract
 import (
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
-	eth "github.com/antonyuhnovets/flash-loan-arbitrage/pkg/ethereum"
 )
 
 type Contract struct {
@@ -13,17 +11,13 @@ type Contract struct {
 	bind.SignerFn
 }
 
-func New(addr string, cli *eth.Client) (
+func New(addr string, ap *api.Api) (
 	out *Contract,
 	err error,
 ) {
-	ca, err := api.NewApi(
-		eth.ToAddress(addr),
-		cli.Client,
-	)
 	out = &Contract{
 		address:     addr,
-		contractApi: ca,
+		contractApi: ap,
 	}
 
 	return

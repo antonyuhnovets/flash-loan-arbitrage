@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func Transaction(t interface{}) (
+func IsTransaction(t interface{}) (
 	tx *types.Transaction,
 	ok bool,
 ) {

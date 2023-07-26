@@ -1,0 +1,6 @@
+tmp
+.vscode
+cache
+storage_test
+**/node_modules/
+.example.env

@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/antonyuhnovets/flash-loan-arbitrage/config"
+	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/api"
 	v1 "github.com/antonyuhnovets/flash-loan-arbitrage/internal/delivery/rest/v1"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/entities"
 	"github.com/antonyuhnovets/flash-loan-arbitrage/internal/trade"
@@ -38,10 +39,14 @@ func Run(conf *config.Config) {
 	}
 
 	// contract connect
-	// cAdress := common.HexToAddress(
-	// 	conf.Blockchain.Contract.Address,
-	// )
-	cont, err := contract.New(conf.Blockchain.Contract.Address, cl)
+	ap, err := api.NewApi(
+		ethereum.ToAddress(conf.Blockchain.Contract.Address),
+		cl.Client,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cont, err := contract.New(conf.Blockchain.Contract.Address, ap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -173,28 +178,28 @@ func IsDeployed(address string) bool {
 	return address != ""
 }
 
-func Deploy(conf *config.Config) (string, error) {
-	arg := fmt.Sprintf(
-		"network=%s",
-		conf.Blockchain.Name,
-	)
-	arg1 := fmt.Sprintf(
-		"contract=%s",
-		conf.Contract.Address,
-	)
-
-	cmd := exec.Command("make", "deploy", arg, arg1)
-	cmd.Stderr = os.Stderr
-
-	out, err := cmd.Output()
+func Deploy(
+	ctx context.Context,
+	cl *ethereum.Client,
+	ctr *contract.Contract,
+	conf *config.Config,
+) (
+	address, txHash string,
+	ap *api.Api,
+	err error,
+) {
+	b, err := cl.GetNextTransaction(ctx)
 	if err != nil {
-		return "", err
+		return
 	}
+	addr, tx, ap, err := api.DeployApi(
+		b, cl.Client,
+		ethereum.ToAddress(conf.Blockchain.Contract.Input),
+	)
+	address = ethereum.FromAddress(addr)
+	txHash = tx.Hash().Hex()
 
-	address := string(out)[len(string(out))-43:]
-	os.Setenv("CONTRACT_ADDRESS", address)
-
-	return address, nil
+	return
 }
 
 func Build(conf *config.Config) error {
@@ -213,5 +218,29 @@ func Build(conf *config.Config) error {
 
 	return nil
 }
+
+// func Deploy(conf *config.Config) (string, error) {
+// 	arg := fmt.Sprintf(
+// 		"network=%s",
+// 		conf.Blockchain.Name,
+// 	)
+// 	arg1 := fmt.Sprintf(
+// 		"contract=%s",
+// 		conf.Contract.Address,
+// 	)
+
+// 	cmd := exec.Command("make", "deploy", arg, arg1)
+// 	cmd.Stderr = os.Stderr
+
+// 	out, err := cmd.Output()
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	address := string(out)[len(string(out))-43:]
+// 	os.Setenv("CONTRACT_ADDRESS", address)
+
+// 	return address, nil
+// }
 
 func Verify(conf *config.Config) {}
